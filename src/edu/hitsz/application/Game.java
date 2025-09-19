@@ -175,7 +175,7 @@ public class Game extends JPanel {
     }
 
     private void shootAction() {
-        // TODO 敌机射击
+        //  敌机射击
         for (AbstractAircraft enemyAircraft : enemyAircrafts) {
             enemyBullets.addAll(enemyAircraft.shoot());
         }
@@ -206,7 +206,17 @@ public class Game extends JPanel {
      * 3. 英雄获得补给
      */
     private void crashCheckAction() {
-        // TODO 敌机子弹攻击英雄
+        //  敌机子弹攻击英雄
+        for(BaseBullet bullet:enemyBullets) {
+            if(bullet.notValid()) {
+                continue;
+            }
+            if(heroAircraft.crash(bullet)) {
+                //敌机子弹打到英雄机
+                heroAircraft.decreaseHp(bullet.getPower());
+                bullet.vanish();
+            }
+        }
 
         // 英雄子弹攻击敌机
         for (BaseBullet bullet : heroBullets) {
