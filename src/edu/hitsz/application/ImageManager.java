@@ -6,6 +6,9 @@ import edu.hitsz.aircraft.HeroAircraft;
 import edu.hitsz.aircraft.MobEnemy;
 import edu.hitsz.bullet.EnemyBullet;
 import edu.hitsz.bullet.HeroBullet;
+import edu.hitsz.supply.BombSupply;
+import edu.hitsz.supply.BulletSupply;
+import edu.hitsz.supply.HpSupply;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -34,6 +37,9 @@ public class ImageManager {
     public static BufferedImage ENEMY_BULLET_IMAGE;
     public static BufferedImage MOB_ENEMY_IMAGE;
     public static BufferedImage ELITE_ENEMY_IMAGE;
+    public static BufferedImage HP_SUPPLY_IMAGE;
+    public static BufferedImage BOMB_SUPPLY_IMAGE;
+    public static BufferedImage BULLET_SUPPLY_IMAGE;
 
     static {
         try {
@@ -47,12 +53,21 @@ public class ImageManager {
             HERO_BULLET_IMAGE = ImageIO.read(new FileInputStream("src/images/bullet_hero.png"));
             ENEMY_BULLET_IMAGE = ImageIO.read(new FileInputStream("src/images/bullet_enemy.png"));
 
+            HP_SUPPLY_IMAGE = ImageIO.read(new FileInputStream("src/images/prop_blood.png"));
+            BOMB_SUPPLY_IMAGE = ImageIO.read(new FileInputStream("src/images/prop_bomb.png"));
+            BULLET_SUPPLY_IMAGE = ImageIO.read(new FileInputStream("src/images/prop_bullet.png"));
+
             CLASSNAME_IMAGE_MAP.put(HeroAircraft.class.getName(), HERO_IMAGE);
             CLASSNAME_IMAGE_MAP.put(MobEnemy.class.getName(), MOB_ENEMY_IMAGE);
             CLASSNAME_IMAGE_MAP.put(EliteEnemy.class.getName(),ELITE_ENEMY_IMAGE);
 
             CLASSNAME_IMAGE_MAP.put(HeroBullet.class.getName(), HERO_BULLET_IMAGE);
             CLASSNAME_IMAGE_MAP.put(EnemyBullet.class.getName(), ENEMY_BULLET_IMAGE);
+
+            CLASSNAME_IMAGE_MAP.put(BombSupply.class.getName(),BOMB_SUPPLY_IMAGE);
+            CLASSNAME_IMAGE_MAP.put(HpSupply.class.getName(),HP_SUPPLY_IMAGE);
+            CLASSNAME_IMAGE_MAP.put(BulletSupply.class.getName(),BULLET_SUPPLY_IMAGE);
+
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(-1);

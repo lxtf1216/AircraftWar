@@ -1,0 +1,15 @@
+package edu.hitsz.supply;
+
+import edu.hitsz.application.Main;
+import edu.hitsz.basic.AbstractFlyingObject;
+
+public class HpSupply extends BaseSupply {
+    private int hp = 10;
+    public HpSupply(int locationX, int locationY,int speedX,int speedY) {
+        super(locationX,locationY,speedX,speedY);
+    }
+
+    public int getHp() {
+        return hp;
+    }
+}
