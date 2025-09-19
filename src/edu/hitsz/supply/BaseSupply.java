@@ -3,7 +3,8 @@ package edu.hitsz.supply;
 import edu.hitsz.application.Main;
 import edu.hitsz.basic.AbstractFlyingObject;
 
-public class BaseSupply extends AbstractFlyingObject {
+public abstract  class BaseSupply extends AbstractFlyingObject {
+    protected int kind = 0;
     public BaseSupply(int locationX, int locationY,int speedX,int speedY) {
         super(locationX,locationY,speedX,speedY);
     }
@@ -16,4 +17,9 @@ public class BaseSupply extends AbstractFlyingObject {
         }
     }
 
+    public abstract int active() ;
+
+    public int getKind() {
+        return kind;
+    }
 }

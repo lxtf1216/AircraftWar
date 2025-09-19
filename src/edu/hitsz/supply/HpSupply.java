@@ -6,10 +6,12 @@ import edu.hitsz.basic.AbstractFlyingObject;
 public class HpSupply extends BaseSupply {
     private int hp = 10;
     public HpSupply(int locationX, int locationY,int speedX,int speedY) {
+
         super(locationX,locationY,speedX,speedY);
+        kind = 3;
     }
 
-    public int getHp() {
+    public int active() {
         return hp;
     }
 }

@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class EliteEnemy extends AbstractAircraft {
     private int shootNum = 1;
-    private int power = 10;
+    private int power = 5;
     private int direction = 1;
     public EliteEnemy(int locationX, int locationY,int speedX,int speedY,int hp) {
         super(locationX,locationY,speedX,speedY,hp);
@@ -36,7 +36,7 @@ public class EliteEnemy extends AbstractAircraft {
         int x = this.getLocationX();
         int y = this.getLocationY() + direction*2;
         int speedX = 0;
-        int speedY = this.getSpeedY() + direction*5;
+        int speedY = this.getSpeedY() + direction*2;
         BaseBullet bullet;
         for(int i=0; i<shootNum; i++){
             // 子弹发射位置相对飞机位置向前偏移

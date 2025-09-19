@@ -5,6 +5,9 @@ import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.basic.AbstractFlyingObject;
 import edu.hitsz.bullet.EnemyBullet;
 import edu.hitsz.supply.BaseSupply;
+import edu.hitsz.supply.BombSupply;
+import edu.hitsz.supply.BulletSupply;
+import edu.hitsz.supply.HpSupply;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 
 import javax.swing.*;
@@ -135,6 +138,9 @@ public class Game extends JPanel {
             // 飞机移动
             aircraftsMoveAction();
 
+            //装备移动
+            supplyMoveAction();
+
             // 撞击检测
             crashCheckAction();
 
@@ -244,6 +250,25 @@ public class Game extends JPanel {
                     if (enemyAircraft.notValid()) {
                         // TODO 获得分数，产生道具补给
                         score += 10;
+                        System.out.println(enemyAircraft.getClass().getName());
+                        if(enemyAircraft.getClass().getName().equals("edu.hitsz.aircraft.EliteEnemy")) {
+                            Random random = new Random();
+                            int rnd = random.nextInt(4);
+                            BaseSupply supply = null;
+                            System.out.println("爆装备了");
+                            if(rnd == 1) {
+
+                                supply = new BombSupply(enemyAircraft.getLocationX(),enemyAircraft.getLocationY(),0,enemyAircraft.getSpeedY());
+                            }
+                            if(rnd == 2) {
+                                supply = new BulletSupply(enemyAircraft.getLocationX(),enemyAircraft.getLocationY(),0,enemyAircraft.getSpeedY());
+                            }
+                            if(rnd == 3) {
+                                supply = new HpSupply(enemyAircraft.getLocationX(),enemyAircraft.getLocationY(),0,enemyAircraft.getSpeedY());
+                            }
+                            if(supply != null)
+                                supplies.add(supply);
+                        }
                     }
                 }
                 // 英雄机 与 敌机 相撞，均损毁
@@ -255,6 +280,17 @@ public class Game extends JPanel {
         }
 
         // Todo: 我方获得道具，道具生效
+        for(BaseSupply supply:supplies) {
+            if(supply.notValid()) continue;
+            if(heroAircraft.crash(supply)) {
+                if(supply.getKind() == 1 || supply.getKind() == 2) {
+                    supply.active();
+                } else {
+                    heroAircraft.addHp(supply.active());
+                }
+                supply.vanish();
+            }
+        }
 
     }
 
@@ -269,6 +305,7 @@ public class Game extends JPanel {
         enemyBullets.removeIf(AbstractFlyingObject::notValid);
         heroBullets.removeIf(AbstractFlyingObject::notValid);
         enemyAircrafts.removeIf(AbstractFlyingObject::notValid);
+        supplies.removeIf(AbstractFlyingObject::notValid);
     }
 
 
@@ -300,6 +337,7 @@ public class Game extends JPanel {
         paintImageWithPositionRevised(g, heroBullets);
 
         paintImageWithPositionRevised(g, enemyAircrafts);
+        paintImageWithPositionRevised(g, supplies);
 
         g.drawImage(ImageManager.HERO_IMAGE, heroAircraft.getLocationX() - ImageManager.HERO_IMAGE.getWidth() / 2,
                 heroAircraft.getLocationY() - ImageManager.HERO_IMAGE.getHeight() / 2, null);

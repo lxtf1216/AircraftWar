@@ -6,6 +6,8 @@ import edu.hitsz.bullet.HeroBullet;
 import java.util.LinkedList;
 import java.util.List;
 
+import static org.apache.commons.lang3.ObjectUtils.max;
+
 /**
  * 英雄飞机，游戏玩家操控
  * @author hitsz
@@ -65,5 +67,7 @@ public class HeroAircraft extends AbstractAircraft {
         }
         return res;
     }
-
+    public void addHp(int dhp) {
+        hp = max(maxHp,hp+dhp);
+    }
 }
