@@ -248,14 +248,12 @@ public class Game extends JPanel {
                     enemyAircraft.decreaseHp(bullet.getPower());
                     bullet.vanish();
                     if (enemyAircraft.notValid()) {
-                        // TODO 获得分数，产生道具补给
+                        //  获得分数，产生道具补给
                         score += 10;
-                        System.out.println(enemyAircraft.getClass().getName());
                         if(enemyAircraft.getClass().getName().equals("edu.hitsz.aircraft.EliteEnemy")) {
                             Random random = new Random();
                             int rnd = random.nextInt(4);
                             BaseSupply supply = null;
-                            System.out.println("爆装备了");
                             if(rnd == 1) {
 
                                 supply = new BombSupply(enemyAircraft.getLocationX(),enemyAircraft.getLocationY(),0,enemyAircraft.getSpeedY());
@@ -279,7 +277,7 @@ public class Game extends JPanel {
             }
         }
 
-        // Todo: 我方获得道具，道具生效
+        //  我方获得道具，道具生效
         for(BaseSupply supply:supplies) {
             if(supply.notValid()) continue;
             if(heroAircraft.crash(supply)) {
