@@ -7,7 +7,7 @@ public class BulletSupply extends BaseSupply{
     }
     public int active() {
 
-        System.out.println("BulletSupply Active!");
+        System.out.println("FireSupply active!");
         return 0;
     }
 }

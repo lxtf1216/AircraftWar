@@ -6,6 +6,7 @@ import edu.hitsz.bullet.HeroBullet;
 import java.util.LinkedList;
 import java.util.List;
 
+import static java.lang.Math.min;
 import static org.apache.commons.lang3.ObjectUtils.max;
 
 /**
@@ -68,6 +69,6 @@ public class HeroAircraft extends AbstractAircraft {
         return res;
     }
     public void addHp(int dhp) {
-        hp = max(maxHp,hp+dhp);
+        hp = min(maxHp,hp+dhp);
     }
 }

@@ -8,7 +8,7 @@ public class BombSupply extends BaseSupply{
     }
     public int active() {
 
-        System.out.println("BombSupply Active!");
+        System.out.println("BombSupply active!");
         return 0;
     }
 }
