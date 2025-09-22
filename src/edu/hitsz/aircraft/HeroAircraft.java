@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static java.lang.Math.min;
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.apache.commons.lang3.ObjectUtils.max;
 
 /**
@@ -39,8 +40,21 @@ public class HeroAircraft extends AbstractAircraft {
      * @param speedY 英雄机射出的子弹的基准速度（英雄机无特定速度）
      * @param hp    初始生命值
      */
-    public HeroAircraft(int locationX, int locationY, int speedX, int speedY, int hp) {
+    private HeroAircraft(int locationX, int locationY, int speedX, int speedY, int hp) {
         super(locationX, locationY, speedX, speedY, hp);
+    }
+
+    private static volatile  HeroAircraft Instance ;
+
+    public static HeroAircraft getInstance(int locationX, int locationY, int speedX, int speedY, int hp) {
+        if(Instance == null) {
+            synchronized (HeroAircraft.class) {
+                if(Instance == null) {
+                    Instance = new HeroAircraft(locationX,locationY,speedX,speedY,hp);
+                }
+            }
+        }
+        return Instance;
     }
 
     @Override
