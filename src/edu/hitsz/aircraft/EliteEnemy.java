@@ -14,7 +14,7 @@ import java.util.List;
  *
  * @author ljc
  */
-public class EliteEnemy extends AbstractAircraft {
+public class EliteEnemy extends AbstractAircraft implements EnemyAircraft{
     private int shootNum = 1;
     private int power = 5;
     private int direction = 1;

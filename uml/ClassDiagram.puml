@@ -1,0 +1,140 @@
+@startuml AircraftWar_ClassDiagram
+
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+package "basic" {
+    abstract class AbstractFlyingObject {
+        # int locationX
+        # int locationY
+        # int speedX
+        # int speedY
+        # BufferedImage image
+        # int width
+        # int height
+        # boolean isValid
+        
+        + AbstractFlyingObject()
+        + AbstractFlyingObject(int, int, int, int)
+        + void forward()
+        + boolean crash(AbstractFlyingObject)
+        + int getLocationX()
+        + int getLocationY()
+        + void setLocation(double, double)
+        + int getSpeedY()
+        + BufferedImage getImage()
+        + int getWidth()
+        + int getHeight()
+        + boolean notValid()
+        + void vanish()
+    }
+}
+
+package "aircraft" {
+    abstract class AbstractAircraft {
+        # int maxHp
+        # int hp
+        
+        + AbstractAircraft(int, int, int, int, int)
+        + void decreaseHp(int)
+        + int getHp()
+        + {abstract} List<BaseBullet> shoot()
+    }
+    
+    class HeroAircraft {
+        - int shootNum
+        - int power
+        - int direction
+        
+        + HeroAircraft(int, int, int, int, int)
+        + void forward()
+        + List<BaseBullet> shoot()
+        + void addHp(int)
+    }
+    
+    class MobEnemy {
+        + MobEnemy(int, int, int, int, int)
+        + void forward()
+        + List<BaseBullet> shoot()
+    }
+    
+    class EliteEnemy {
+        - int shootNum
+        - int power
+        - int direction
+        
+        + EliteEnemy(int, int, int, int, int)
+        + void forward()
+        + List<BaseBullet> shoot()
+    }
+}
+
+package "bullet" {
+    abstract class BaseBullet {
+        - int power
+        
+        + BaseBullet(int, int, int, int, int)
+        + void forward()
+        + int getPower()
+    }
+    
+    class HeroBullet {
+        + HeroBullet(int, int, int, int, int)
+    }
+    
+    class EnemyBullet {
+        + EnemyBullet(int, int, int, int, int)
+    }
+}
+
+package "supply" {
+    abstract class BaseSupply {
+        # int kind
+        
+        + BaseSupply(int, int, int, int)
+        + void forward()
+        + {abstract} int active()
+        + int getKind()
+    }
+    
+    class HpSupply {
+        - int hp
+        
+        + HpSupply(int, int, int, int)
+        + int active()
+    }
+    
+    class BulletSupply {
+        + BulletSupply(int, int, int, int)
+        + int active()
+    }
+    
+    class BombSupply {
+        + BombSupply(int, int, int, int)
+        + int active()
+    }
+}
+
+' 继承关系
+AbstractFlyingObject <|-- AbstractAircraft
+AbstractFlyingObject <|-- BaseBullet
+AbstractFlyingObject <|-- BaseSupply
+
+AbstractAircraft <|-- HeroAircraft
+AbstractAircraft <|-- MobEnemy
+AbstractAircraft <|-- EliteEnemy
+
+BaseBullet <|-- HeroBullet
+BaseBullet <|-- EnemyBullet
+
+BaseSupply <|-- HpSupply
+BaseSupply <|-- BulletSupply
+BaseSupply <|-- BombSupply
+
+' 依赖关系
+AbstractAircraft ..> BaseBullet : creates
+HeroAircraft ..> HeroBullet : creates
+EliteEnemy ..> EnemyBullet : creates
+
+@enduml
