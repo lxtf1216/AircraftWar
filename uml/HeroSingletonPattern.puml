@@ -6,45 +6,13 @@ skinparam classFontStyle bold
 
 title 英雄机单例模式
 
-abstract class AbstractAircraft {
-    # int maxHp
-    # int hp
-    
-    + AbstractAircraft(int, int, int, int, int)
-    + void decreaseHp(int)
-    + int getHp()
-    + {abstract} List<BaseBullet> shoot()
-}
-
 class HeroAircraft {
-    - int shootNum
-    - int power
-    - int direction
     - {static} volatile HeroAircraft Instance
     
-    - HeroAircraft(int, int, int, int, int)
-    + {static} HeroAircraft getInstance(int, int, int, int, int)
-    + void forward()
-    + List<BaseBullet> shoot()
-    + void addHp(int)
+    - HeroAircraft()
+    + {static} HeroAircraft getInstance()
 }
 
-abstract class BaseBullet {
-    - int power
-    
-    + BaseBullet(int, int, int, int, int)
-    + void forward()
-    + int getPower()
-}
-
-class HeroBullet {
-    + HeroBullet(int, int, int, int, int)
-}
-
-AbstractAircraft <|-- HeroAircraft
-BaseBullet <|-- HeroBullet
-HeroAircraft ..> HeroBullet : creates
-
-note right of HeroAircraft : 单例模式\n- 私有构造函数\n- 静态实例变量\n- 双重检查锁定\n- 全局唯一实例
+note right of HeroAircraft : 单例模式核心要素:\n- 私有构造函数\n- 静态实例变量\n- 静态获取方法\n- 全局唯一实例
 
 @enduml

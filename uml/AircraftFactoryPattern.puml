@@ -6,63 +6,36 @@ skinparam classFontStyle bold
 
 title 敌机生产工厂模式
 
-interface EnemyAircraft {
-    + void forward()
-    + List<BaseBullet> shoot()
-    + void decreaseHp(int)
-    + int getHp()
-}
-
-abstract class AbstractAircraft {
-    # int maxHp
-    # int hp
-    
-    + AbstractAircraft(int, int, int, int, int)
-    + void decreaseHp(int)
-    + int getHp()
-    + {abstract} List<BaseBullet> shoot()
-}
-
-class MobEnemy {
-    + MobEnemy(int, int, int, int, int)
-    + void forward()
-    + List<BaseBullet> shoot()
-}
-
-class EliteEnemy {
-    - int shootNum
-    - int power
-    - int direction
-    
-    + EliteEnemy(int, int, int, int, int)
-    + void forward()
-    + List<BaseBullet> shoot()
-}
-
 interface AircraftFactory {
-    + EnemyAircraft createNewEnemyAircraft(int, int, int, int, int)
+    + EnemyAircraft createNewEnemyAircraft()
 }
 
 class MobEnemyFactory {
-    + EnemyAircraft createNewEnemyAircraft(int, int, int, int, int)
+    + EnemyAircraft createNewEnemyAircraft()
 }
 
 class EliteEnemyFactory {
-    + EnemyAircraft createNewEnemyAircraft(int, int, int, int, int)
+    + EnemyAircraft createNewEnemyAircraft()
 }
 
-AbstractAircraft <|-- MobEnemy
-AbstractAircraft <|-- EliteEnemy
-EnemyAircraft <|.. MobEnemy
-EnemyAircraft <|.. EliteEnemy
+interface EnemyAircraft {
+}
+
+class MobEnemy {
+}
+
+class EliteEnemy {
+}
 
 AircraftFactory <|.. MobEnemyFactory
 AircraftFactory <|.. EliteEnemyFactory
 
-AircraftFactory ..> EnemyAircraft : creates
+EnemyAircraft <|.. MobEnemy
+EnemyAircraft <|.. EliteEnemy
+
 MobEnemyFactory ..> MobEnemy : creates
 EliteEnemyFactory ..> EliteEnemy : creates
 
-note top of AircraftFactory : 工厂模式\n- 抽象工厂接口\n- 具体工厂实现\n- 产品创建封装
+note top of AircraftFactory : 工厂模式核心要素:\n- 抽象工厂接口\n- 具体工厂实现\n- 产品接口\n- 具体产品实现\n- 客户端与具体产品解耦
 
 @enduml
