@@ -1,0 +1,73 @@
+@startuml SupplyFactoryPattern
+
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+title 道具生产工厂模式
+
+interface Supply {
+    + void forward()
+    + int active()
+    + int getKind()
+}
+
+abstract class BaseSupply {
+    # int kind
+    
+    + BaseSupply(int, int, int, int)
+    + void forward()
+    + {abstract} int active()
+    + int getKind()
+}
+
+class HpSupply {
+    - int hp
+    
+    + HpSupply(int, int, int, int)
+    + int active()
+}
+
+class BulletSupply {
+    + BulletSupply(int, int, int, int)
+    + int active()
+}
+
+class BombSupply {
+    + BombSupply(int, int, int, int)
+    + int active()
+}
+
+interface SupplyFactory {
+    + Supply createNewSupply(int, int, int, int)
+}
+
+class HpSupplyFactory {
+    + Supply createNewSupply(int, int, int, int)
+}
+
+class BulletSupplyFactory {
+    + Supply createNewSupply(int, int, int, int)
+}
+
+class BombSupplyFactory {
+    + Supply createNewSupply(int, int, int, int)
+}
+
+Supply <|.. BaseSupply
+BaseSupply <|-- HpSupply
+BaseSupply <|-- BulletSupply
+BaseSupply <|-- BombSupply
+
+SupplyFactory <|.. HpSupplyFactory
+SupplyFactory <|.. BulletSupplyFactory
+SupplyFactory <|.. BombSupplyFactory
+
+SupplyFactory ..> Supply : creates
+HpSupplyFactory ..> HpSupply : creates
+BulletSupplyFactory ..> BulletSupply : creates
+BombSupplyFactory ..> BombSupply : creates
+
+note top of SupplyFactory : 工厂模式\n- 抽象工厂接口\n- 具体工厂实现\n- 道具创建封装
+
+@enduml

@@ -77,7 +77,7 @@ public class Game extends JPanel {
         heroAircraft = HeroAircraft.getInstance(
                 Main.WINDOW_WIDTH / 2,
                 Main.WINDOW_HEIGHT - ImageManager.HERO_IMAGE.getHeight() ,
-                0, 0, 100);
+                0, 0, 1000);
 
         enemyAircrafts = new LinkedList<>();
         heroBullets = new LinkedList<>();
@@ -251,15 +251,15 @@ public class Game extends JPanel {
                         score += 10;
                         if(enemyAircraft.getClass().getName().equals("edu.hitsz.aircraft.EliteEnemy")) {
                             Random random = new Random();
-                            int rnd = random.nextInt(4);
+                            int rnd = random.nextInt(10);
                             Supply supply = null;
                             SupplyFactory supplyFactory = null;
-                            if(rnd == 1) supplyFactory = new BombSupplyFactory();
-                            if(rnd == 2) supplyFactory = new BulletSupplyFactory();
-                            if(rnd == 3) supplyFactory = new HpSupplyFactory();
-                            if(rnd > 0 ) supply = supplyFactory.createNewSupply(enemyAircraft.getLocationX(),enemyAircraft.getLocationY(),0,enemyAircraft.getSpeedY()
+                            if(rnd >=0 && rnd <3) supplyFactory = new BombSupplyFactory();
+                            if(rnd >=3 && rnd <6) supplyFactory = new BulletSupplyFactory();
+                            if(rnd >=6 && rnd <9) supplyFactory = new HpSupplyFactory();
+                            if(rnd < 9 ) supply = supplyFactory.createNewSupply(enemyAircraft.getLocationX(),enemyAircraft.getLocationY(),0,enemyAircraft.getSpeedY()
                             );
-                            if(rnd > 0 ) supplies.add((BaseSupply) supply);
+                            if(rnd < 9 ) supplies.add((BaseSupply) supply);
                         }
                     }
                 }

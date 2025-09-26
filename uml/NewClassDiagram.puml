@@ -1,0 +1,205 @@
+@startuml AircraftWar_NewClassDiagram
+
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+package "basic" {
+    abstract class AbstractFlyingObject {
+        # int locationX
+        # int locationY
+        # int speedX
+        # int speedY
+        # BufferedImage image
+        # int width
+        # int height
+        # boolean isValid
+        
+        + AbstractFlyingObject()
+        + AbstractFlyingObject(int, int, int, int)
+        + void forward()
+        + boolean crash(AbstractFlyingObject)
+        + int getLocationX()
+        + int getLocationY()
+        + void setLocation(double, double)
+        + int getSpeedY()
+        + BufferedImage getImage()
+        + int getWidth()
+        + int getHeight()
+        + boolean notValid()
+        + void vanish()
+    }
+}
+
+package "aircraft" {
+    interface EnemyAircraft {
+        + void forward()
+        + List<BaseBullet> shoot()
+        + void decreaseHp(int)
+        + int getHp()
+    }
+    
+    abstract class AbstractAircraft {
+        # int maxHp
+        # int hp
+        
+        + AbstractAircraft(int, int, int, int, int)
+        + void decreaseHp(int)
+        + int getHp()
+        + {abstract} List<BaseBullet> shoot()
+    }
+    
+    class HeroAircraft {
+        - int shootNum
+        - int power
+        - int direction
+        - {static} volatile HeroAircraft Instance
+        
+        - HeroAircraft(int, int, int, int, int)
+        + {static} HeroAircraft getInstance(int, int, int, int, int)
+        + void forward()
+        + List<BaseBullet> shoot()
+        + void addHp(int)
+    }
+    
+    class MobEnemy {
+        + MobEnemy(int, int, int, int, int)
+        + void forward()
+        + List<BaseBullet> shoot()
+    }
+    
+    class EliteEnemy {
+        - int shootNum
+        - int power
+        - int direction
+        
+        + EliteEnemy(int, int, int, int, int)
+        + void forward()
+        + List<BaseBullet> shoot()
+    }
+}
+
+package "aircraftfactory" {
+    interface AircraftFactory {
+        + EnemyAircraft createNewEnemyAircraft(int, int, int, int, int)
+    }
+    
+    class EliteEnemyFactory {
+        + EnemyAircraft createNewEnemyAircraft(int, int, int, int, int)
+    }
+    
+    class MobEnemyFactory {
+        + EnemyAircraft createNewEnemyAircraft(int, int, int, int, int)
+    }
+}
+
+package "bullet" {
+    abstract class BaseBullet {
+        - int power
+        
+        + BaseBullet(int, int, int, int, int)
+        + void forward()
+        + int getPower()
+    }
+    
+    class HeroBullet {
+        + HeroBullet(int, int, int, int, int)
+    }
+    
+    class EnemyBullet {
+        + EnemyBullet(int, int, int, int, int)
+    }
+}
+
+package "supply" {
+    interface Supply {
+        + void forward()
+        + int active()
+        + int getKind()
+    }
+    
+    abstract class BaseSupply {
+        # int kind
+        
+        + BaseSupply(int, int, int, int)
+        + void forward()
+        + {abstract} int active()
+        + int getKind()
+    }
+    
+    class HpSupply {
+        - int hp
+        
+        + HpSupply(int, int, int, int)
+        + int active()
+    }
+    
+    class BulletSupply {
+        + BulletSupply(int, int, int, int)
+        + int active()
+    }
+    
+    class BombSupply {
+        + BombSupply(int, int, int, int)
+        + int active()
+    }
+}
+
+package "supplyfactory" {
+    interface SupplyFactory {
+        + Supply createNewSupply(int, int, int, int)
+    }
+    
+    class BombSupplyFactory {
+        + Supply createNewSupply(int, int, int, int)
+    }
+    
+    class BulletSupplyFactory {
+        + Supply createNewSupply(int, int, int, int)
+    }
+    
+    class HpSupplyFactory {
+        + Supply createNewSupply(int, int, int, int)
+    }
+}
+
+AbstractFlyingObject <|-- AbstractAircraft
+AbstractFlyingObject <|-- BaseBullet
+AbstractFlyingObject <|-- BaseSupply
+
+AbstractAircraft <|-- HeroAircraft
+AbstractAircraft <|-- MobEnemy
+AbstractAircraft <|-- EliteEnemy
+
+EnemyAircraft <|.. MobEnemy
+EnemyAircraft <|.. EliteEnemy
+
+BaseBullet <|-- HeroBullet
+BaseBullet <|-- EnemyBullet
+
+Supply <|.. BaseSupply
+BaseSupply <|-- HpSupply
+BaseSupply <|-- BulletSupply
+BaseSupply <|-- BombSupply
+
+AircraftFactory <|.. EliteEnemyFactory
+AircraftFactory <|.. MobEnemyFactory
+
+SupplyFactory <|.. BombSupplyFactory
+SupplyFactory <|.. BulletSupplyFactory
+SupplyFactory <|.. HpSupplyFactory
+
+AbstractAircraft ..> BaseBullet : creates
+HeroAircraft ..> HeroBullet : creates
+EliteEnemy ..> EnemyBullet : creates
+
+AircraftFactory ..> EnemyAircraft : creates
+EliteEnemyFactory ..> EliteEnemy : creates
+MobEnemyFactory ..> MobEnemy : creates
+
+SupplyFactory ..> Supply : creates
+BombSupplyFactory ..> BombSupply : creates
+BulletSupplyFactory ..> BulletSupply : creates
+HpSupplyFactory ..> HpSupply : creates
+
+@enduml
