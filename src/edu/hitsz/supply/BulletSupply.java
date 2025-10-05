@@ -8,6 +8,6 @@ public class BulletSupply extends BaseSupply implements Supply{
     public int active() {
 
         System.out.println("FireSupply active!");
-        return 0;
+        return 1;
     }
 }

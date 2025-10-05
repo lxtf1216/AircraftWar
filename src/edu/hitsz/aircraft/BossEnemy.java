@@ -7,7 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class BossEnemy extends AbstractAircraft implements EnemyAircraft{
-    private int shootcount = 5;
+    private int shootcount = 3;
     private int direction = 1;
     private int power = 5;
     private int radius = 80;

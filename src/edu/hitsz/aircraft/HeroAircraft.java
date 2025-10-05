@@ -1,6 +1,7 @@
 package edu.hitsz.aircraft;
 
 import edu.hitsz.bullet.BaseBullet;
+import edu.hitsz.bullet.EnemyBullet;
 import edu.hitsz.bullet.HeroBullet;
 
 import java.util.LinkedList;
@@ -40,6 +41,7 @@ public class HeroAircraft extends AbstractAircraft {
      * @param speedY 英雄机射出的子弹的基准速度（英雄机无特定速度）
      * @param hp    初始生命值
      */
+    private int radius = 80;
     private HeroAircraft(int locationX, int locationY, int speedX, int speedY, int hp) {
         super(locationX, locationY, speedX, speedY, hp);
     }
@@ -84,5 +86,34 @@ public class HeroAircraft extends AbstractAircraft {
     }
     public void addHp(int dhp) {
         hp = min(maxHp,hp+dhp);
+    }
+    public void addshootNum(int dshootNum) {
+        shootNum += dshootNum;
+    }
+
+    public List<BaseBullet> shootCircle() {
+        List<BaseBullet> res = new LinkedList<>();
+        int x = this.getLocationX();
+        int y = this.getLocationY();
+
+        int bulletCount = 10;
+
+        for (int i = 0; i < bulletCount; i++) {
+            double angle = 2 * Math.PI * i / bulletCount;
+
+            int offsetX = (int) (Math.cos(angle) * radius);
+            int offsetY = (int) (Math.sin(angle) * radius);
+
+            int bulletX = x + offsetX;
+            int bulletY = y + offsetY;
+
+            int speedX = 0;
+            int speedY = direction*10;
+
+            BaseBullet bullet = new HeroBullet(bulletX, bulletY, speedX, speedY, power);
+            res.add(bullet);
+        }
+
+        return res;
     }
 }

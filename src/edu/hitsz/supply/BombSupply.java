@@ -9,6 +9,6 @@ public class BombSupply extends BaseSupply implements Supply{
     public int active() {
 
         System.out.println("BombSupply active!");
-        return 0;
+        return 1;
     }
 }
