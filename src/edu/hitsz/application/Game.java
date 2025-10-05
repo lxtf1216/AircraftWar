@@ -3,6 +3,7 @@ package edu.hitsz.application;
 import edu.hitsz.aircraft.*;
 import edu.hitsz.aircraftfactory.AircraftFactory;
 import edu.hitsz.aircraftfactory.EliteEnemyFactory;
+import edu.hitsz.aircraftfactory.ElitePlusEnemyFactory;
 import edu.hitsz.aircraftfactory.MobEnemyFactory;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.basic.AbstractFlyingObject;
@@ -12,6 +13,7 @@ import edu.hitsz.supplyfactory.BombSupplyFactory;
 import edu.hitsz.supplyfactory.BulletSupplyFactory;
 import edu.hitsz.supplyfactory.HpSupplyFactory;
 import edu.hitsz.supplyfactory.SupplyFactory;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 
 import javax.swing.*;
@@ -115,16 +117,17 @@ public class Game extends JPanel {
 
                 if (enemyAircrafts.size() < enemyMaxNumber) {
                     Random random = new Random();
-                    int choice = random.nextInt(2);
-                    AircraftFactory enemyaircraftfactory;
-                    EnemyAircraft enemyaircraft;
-                    if(choice == 0 ) enemyaircraftfactory = new MobEnemyFactory();
-                    else enemyaircraftfactory = new EliteEnemyFactory();
+                    int choice = random.nextInt(6);
+                    AircraftFactory enemyaircraftfactory = null;
+                    EnemyAircraft enemyaircraft = null;
+                    if(choice < 3 ) enemyaircraftfactory = new MobEnemyFactory();
+                    if(choice >=3 && choice < 5) enemyaircraftfactory = new EliteEnemyFactory();
+                    if(choice == 5) enemyaircraftfactory = new ElitePlusEnemyFactory();
                     enemyaircraft = enemyaircraftfactory.createNewEnemyAircraft((int) (Math.random() * (Main.WINDOW_WIDTH - ImageManager.MOB_ENEMY_IMAGE.getWidth())),
                             (int) (Math.random() * Main.WINDOW_HEIGHT * 0.05),
                             0,
                             10,
-                            30+choice*10);//普通30精英40
+                            30+(choice>=3?1:0)*15 + (choice>=5?1:0)*15);//不同的敌机血量不同
                     enemyAircrafts.add((AbstractAircraft) enemyaircraft);
                 }
                 // 飞机射出子弹
