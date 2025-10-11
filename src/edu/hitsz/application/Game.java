@@ -8,11 +8,11 @@ import edu.hitsz.aircraftfactory.MobEnemyFactory;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.basic.AbstractFlyingObject;
 import edu.hitsz.bullet.EnemyBullet;
+import edu.hitsz.bullet.HeroBullet;
+import edu.hitsz.shootstrategy.shootCircle;
+import edu.hitsz.shootstrategy.shootScatter;
 import edu.hitsz.supply.*;
-import edu.hitsz.supplyfactory.BombSupplyFactory;
-import edu.hitsz.supplyfactory.BulletSupplyFactory;
-import edu.hitsz.supplyfactory.HpSupplyFactory;
-import edu.hitsz.supplyfactory.SupplyFactory;
+import edu.hitsz.supplyfactory.*;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 
@@ -238,15 +238,16 @@ public class Game extends JPanel {
      */
     private void produceSupply(AbstractAircraft enemyAircraft,int speedX,int speedY) {
         Random random = new Random();
-        int rnd = random.nextInt(10);
+        int rnd = random.nextInt(13);
         Supply supply = null;
         SupplyFactory supplyFactory = null;
         if(rnd <3) supplyFactory = new BombSupplyFactory();
         if(rnd >=3 && rnd <6) supplyFactory = new BulletSupplyFactory();
         if(rnd >=6 && rnd <9) supplyFactory = new HpSupplyFactory();
-        if(rnd < 9 ) supply = supplyFactory.createNewSupply(enemyAircraft.getLocationX(),enemyAircraft.getLocationY(),speedX,speedY
+        if(rnd >= 9 && rnd <12) supplyFactory = new BulletPlusSupplyFactory();
+        if(rnd < 12 ) supply = supplyFactory.createNewSupply(enemyAircraft.getLocationX(),enemyAircraft.getLocationY(),speedX,speedY
         );
-        if(rnd < 9 ) supplies.add((BaseSupply) supply);
+        if(rnd < 12 ) supplies.add((BaseSupply) supply);
     }
     public void deathOfEnemy(AbstractAircraft enemyAircraft) {
         if(enemyAircraft instanceof EliteEnemy || enemyAircraft instanceof ElitePlusEnemy ) {
@@ -314,6 +315,10 @@ public class Game extends JPanel {
                 }
                 if(supply.getKind() == 2) {
                     System.out.println("fire supply active!");
+                    heroAircraft.changeShootStrategy(new shootScatter());
+                }
+                if(supply.getKind() == 3) {
+                    heroAircraft.changeShootStrategy(new shootCircle());
                 }
                 supply.vanish();
             }
