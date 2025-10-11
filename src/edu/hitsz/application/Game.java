@@ -19,6 +19,7 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
@@ -48,7 +49,6 @@ public class Game extends JPanel {
     private final List<BaseBullet> heroBullets;
     private final List<BaseBullet> enemyBullets;
     private final List<BaseSupply> supplies;
-    private final List<Integer> ReduceShootTime ;
 
     /**
      * 屏幕中出现的敌机最大数量
@@ -87,7 +87,6 @@ public class Game extends JPanel {
         heroBullets = new LinkedList<>();
         enemyBullets = new LinkedList<>();
         supplies = new LinkedList<>();
-        ReduceShootTime = new LinkedList<>();
         /**
          * Scheduled 线程池，用于定时任务调度
          * 关于alibaba code guide：可命名的 ThreadFactory 一般需要第三方包
@@ -113,11 +112,6 @@ public class Game extends JPanel {
             // 周期性执行（控制频率）
             if (timeCountAndNewCycleJudge()) {
                 System.out.println(time);
-                //减少子弹
-                while(!ReduceShootTime.isEmpty() && time>= (ReduceShootTime.get(0))) {
-                    heroAircraft.addshootNum(-1);
-                    ReduceShootTime.remove(0);
-                }
                 // 新敌机产生
 
                 if (enemyAircrafts.size() < enemyMaxNumber) {
@@ -148,7 +142,12 @@ public class Game extends JPanel {
                     enemyAircrafts.add(boss);
                 }
                 // 飞机射出子弹
-                shootAction();
+                try {
+                    shootAction();
+                } catch (InvocationTargetException | NoSuchMethodException | InstantiationException |
+                         IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             // 子弹移动
@@ -202,7 +201,7 @@ public class Game extends JPanel {
         }
     }
 
-    private void shootAction() {
+    private void shootAction() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         //  敌机射击
         for (AbstractAircraft enemyAircraft : enemyAircrafts) {
             enemyBullets.addAll(enemyAircraft.shoot());
@@ -242,7 +241,7 @@ public class Game extends JPanel {
         int rnd = random.nextInt(10);
         Supply supply = null;
         SupplyFactory supplyFactory = null;
-        if(rnd >=0 && rnd <3) supplyFactory = new BombSupplyFactory();
+        if(rnd <3) supplyFactory = new BombSupplyFactory();
         if(rnd >=3 && rnd <6) supplyFactory = new BulletSupplyFactory();
         if(rnd >=6 && rnd <9) supplyFactory = new HpSupplyFactory();
         if(rnd < 9 ) supply = supplyFactory.createNewSupply(enemyAircraft.getLocationX(),enemyAircraft.getLocationY(),speedX,speedY
@@ -314,8 +313,7 @@ public class Game extends JPanel {
                         heroBullets.addAll(heroAircraft.shootCircle());
                 }
                 if(supply.getKind() == 2) {
-                    ReduceShootTime.add(time + 10*cycleDuration);
-                    heroAircraft.addshootNum(supply.active());
+                    System.out.println("fire supply active!");
                 }
                 supply.vanish();
             }
