@@ -9,6 +9,8 @@ import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.basic.AbstractFlyingObject;
 import edu.hitsz.bullet.EnemyBullet;
 import edu.hitsz.bullet.HeroBullet;
+import edu.hitsz.ranklist.RankListDao;
+import edu.hitsz.ranklist.RankListDaoImpl;
 import edu.hitsz.shootstrategy.shootCircle;
 import edu.hitsz.shootstrategy.shootScatter;
 import edu.hitsz.supply.*;
@@ -20,6 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.InvocationTargetException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
@@ -73,6 +76,12 @@ public class Game extends JPanel {
     private int cycleTime = 0;
 
     /**
+     * 排行榜
+     *
+     */
+    private RankListDao rankList;
+
+    /**
      * 游戏结束标志
      */
     private boolean gameOverFlag = false;
@@ -87,6 +96,7 @@ public class Game extends JPanel {
         heroBullets = new LinkedList<>();
         enemyBullets = new LinkedList<>();
         supplies = new LinkedList<>();
+        rankList = new RankListDaoImpl();
         /**
          * Scheduled 线程池，用于定时任务调度
          * 关于alibaba code guide：可命名的 ThreadFactory 一般需要第三方包
@@ -171,6 +181,9 @@ public class Game extends JPanel {
             // 游戏结束检查英雄机是否存活
             if (heroAircraft.getHp() <= 0) {
                 // 游戏结束
+                rankList.addRecord("testUserName",score, LocalDateTime.now());
+                rankList.printRankList();
+                rankList.saveRankList();
                 executorService.shutdown();
                 gameOverFlag = true;
                 System.out.println("Game Over!");
