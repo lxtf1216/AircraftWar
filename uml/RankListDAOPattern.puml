@@ -1,0 +1,52 @@
+@startuml RankListDAO模式类图
+
+interface RankListDao {
+    + addRecord(name: String, score: int, time: LocalDateTime): void
+    + printRankList(): void
+    + saveRankList(): void
+}
+
+class RankListDaoImpl {
+    - rankList: RankList
+    + addRecord(name: String, score: int, time: LocalDateTime): void
+    + printRankList(): void
+    + saveRankList(): void
+}
+
+class RankList {
+    - {static} Instance: RankList
+    - recordHeap: PriorityQueue<UserGameRecord>
+    - {static} SAVE_FILE: String
+    - RankList()
+    - loadRankList(): void
+    + {static} getInstance(): RankList
+    + storeRankList(): void
+    + insertRecord(record: UserGameRecord): void
+    + printAllRecords(): void
+}
+
+class UserGameRecord {
+    - {static} serialVersionUID: long
+    - name: String
+    - score: int
+    - time: LocalDateTime
+    + UserGameRecord(name: String, score: int, time: LocalDateTime)
+    + getName(): String
+    + getScore(): int
+    + getTime(): LocalDateTime
+}
+
+class LocalDateTime {
+}
+
+RankListDao <|.. RankListDaoImpl
+RankListDaoImpl --> RankList : uses
+RankList --> UserGameRecord : contains
+UserGameRecord --> LocalDateTime : uses
+
+note right of RankListDao : DAO接口定义数据访问操作
+note right of RankListDaoImpl : DAO实现类，封装对RankList的操作
+note top of RankList : 单例模式管理排行榜数据
+note bottom of UserGameRecord : 游戏记录实体类，实现Serializable
+
+@enduml

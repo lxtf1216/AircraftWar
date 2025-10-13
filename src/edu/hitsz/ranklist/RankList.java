@@ -29,7 +29,6 @@ public class RankList {
                 java.util.List<UserGameRecord> list = (java.util.List<UserGameRecord>) obj;
                 recordHeap.addAll(list);
             }
-            System.out.println("排行榜已从 " + SAVE_FILE + " 加载。");
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("加载排行榜时发生错误: " + e.getMessage());
             e.printStackTrace();

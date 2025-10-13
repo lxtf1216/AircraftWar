@@ -1,0 +1,65 @@
+@startuml 开火模式策略模式类图
+
+interface shootStrategy {
+    + shoot(aircraft: AbstractAircraft): List<BaseBullet>
+}
+
+class shootStraight {
+    + shoot(aircraft: AbstractAircraft): List<BaseBullet>
+}
+
+class shootScatter {
+    + shoot(aircraft: AbstractAircraft): List<BaseBullet>
+}
+
+class shootCircle {
+    + shoot(aircraft: AbstractAircraft): List<BaseBullet>
+}
+
+class shootNone {
+    + shoot(aircraft: AbstractAircraft): List<BaseBullet>
+}
+
+abstract class AbstractAircraft {
+    # maxHp: int
+    # hp: int
+    # direction: int
+    # power: int
+    # bullet: Class<?>
+    + AbstractAircraft(locationX: int, locationY: int, speedX: int, speedY: int, hp: int)
+    + decreaseHp(decrease: int): void
+    + getHp(): int
+    + {abstract} shoot(): List<BaseBullet>
+    + getDirection(): int
+    + getPower(): int
+    + getBullet(): Class<?>
+}
+
+class BossEnemy {
+    - shootcount: int
+    - shootstrategy: shootStrategy
+    + BossEnemy(locationX: int, locationY: int, speedX: int, speedY: int, hp: int)
+    + shoot(): List<BaseBullet>
+}
+
+class BaseBullet {
+}
+
+shootStrategy <|.. shootStraight
+shootStrategy <|.. shootScatter
+shootStrategy <|.. shootCircle
+shootStrategy <|.. shootNone
+
+AbstractAircraft <|-- BossEnemy
+BossEnemy --> shootStrategy : uses
+shootStrategy ..> AbstractAircraft : uses
+shootStrategy ..> BaseBullet : creates
+
+note right of BossEnemy : 使用shootCircle策略
+note top of shootStrategy : 策略接口定义开火行为
+note bottom of shootStraight : 直线射击策略
+note bottom of shootScatter : 散射策略
+note bottom of shootCircle : 环形射击策略
+note bottom of shootNone : 不射击策略
+
+@enduml
