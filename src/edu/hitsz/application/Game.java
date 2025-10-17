@@ -36,6 +36,16 @@ import java.util.Random.*;
 public class Game extends JPanel {
 
     private int backGroundTop = 0;
+    
+    /**
+     * 游戏难度 1-简单, 2-普通, 3-困难
+     */
+    private int difficulty = 2;
+    
+    /**
+     * 当前背景图片
+     */
+    private BufferedImage currentBackgroundImage;
 
     /**
      * Scheduled 线程池，用于任务调度
@@ -87,6 +97,28 @@ public class Game extends JPanel {
     private boolean gameOverFlag = false;
 
     public Game() {
+        this(2); // 默认普通难度
+    }
+    
+    public Game(int difficulty) {
+        this.difficulty = difficulty;
+        
+        // 根据难度设置背景图片
+        switch (difficulty) {
+            case 1:
+                currentBackgroundImage = ImageManager.BACKGROUND_IMAGE_EASY;
+                break;
+            case 2:
+                currentBackgroundImage = ImageManager.BACKGROUND_IMAGE_NORMAL;
+                break;
+            case 3:
+                currentBackgroundImage = ImageManager.BACKGROUND_IMAGE_HARD;
+                break;
+            default:
+                currentBackgroundImage = ImageManager.BACKGROUND_IMAGE;
+                break;
+        }
+        
         heroAircraft = HeroAircraft.getInstance(
                 Main.WINDOW_WIDTH / 2,
                 Main.WINDOW_HEIGHT - ImageManager.HERO_IMAGE.getHeight() ,
@@ -369,8 +401,8 @@ public class Game extends JPanel {
         super.paint(g);
 
         // 绘制背景,图片滚动
-        g.drawImage(ImageManager.BACKGROUND_IMAGE, 0, this.backGroundTop - Main.WINDOW_HEIGHT, null);
-        g.drawImage(ImageManager.BACKGROUND_IMAGE, 0, this.backGroundTop, null);
+        g.drawImage(currentBackgroundImage, 0, this.backGroundTop - Main.WINDOW_HEIGHT, null);
+        g.drawImage(currentBackgroundImage, 0, this.backGroundTop, null);
         this.backGroundTop += 1;
         if (this.backGroundTop == Main.WINDOW_HEIGHT) {
             this.backGroundTop = 0;

@@ -26,9 +26,26 @@ public class Main {
                 WINDOW_WIDTH, WINDOW_HEIGHT);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        Game game = new Game();
-        frame.add(game);
+        // 创建开始界面
+        StartGamePanel startPanel = new StartGamePanel();
+        startPanel.setGameStartListener(new StartGamePanel.GameStartListener() {
+            @Override
+            public void onGameStart(int difficulty, boolean musicEnabled) {
+                // 清除开始界面
+                frame.getContentPane().removeAll();
+                
+                // 创建游戏界面
+                Game game = new Game(difficulty);
+                frame.add(game);
+                frame.revalidate();
+                frame.repaint();
+                
+                // 启动游戏
+                game.action();
+            }
+        });
+        
+        frame.add(startPanel);
         frame.setVisible(true);
-        game.action();
     }
 }
