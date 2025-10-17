@@ -95,9 +95,25 @@ public class Game extends JPanel {
      * 游戏结束标志
      */
     private boolean gameOverFlag = false;
+    
+    /**
+     * 游戏结束回调接口
+     */
+    public interface GameOverCallback {
+        void onGameOver(int score, int difficulty);
+    }
+    
+    private GameOverCallback gameOverCallback;
 
     public Game() {
         this(2); // 默认普通难度
+    }
+    
+    /**
+     * 设置游戏结束回调
+     */
+    public void setGameOverCallback(GameOverCallback callback) {
+        this.gameOverCallback = callback;
     }
     
     public Game(int difficulty) {
@@ -213,12 +229,14 @@ public class Game extends JPanel {
             // 游戏结束检查英雄机是否存活
             if (heroAircraft.getHp() <= 0) {
                 // 游戏结束
-                rankList.addRecord("testUserName",score, LocalDateTime.now());
-                rankList.printRankList();
-                rankList.saveRankList();
                 executorService.shutdown();
                 gameOverFlag = true;
                 System.out.println("Game Over!");
+                
+                // 调用游戏结束回调
+                if (gameOverCallback != null) {
+                    SwingUtilities.invokeLater(() -> gameOverCallback.onGameOver(score, difficulty));
+                }
             }
 
         };

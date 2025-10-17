@@ -27,25 +27,113 @@ public class Main {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // 创建开始界面
+        showStartScreen(frame);
+        
+        frame.setVisible(true);
+    }
+    
+    /**
+     * 显示开始界面
+     */
+    private static void showStartScreen(JFrame frame) {
+        frame.getContentPane().removeAll();
+        
         StartGamePanel startPanel = new StartGamePanel();
         startPanel.setGameStartListener(new StartGamePanel.GameStartListener() {
             @Override
             public void onGameStart(int difficulty, boolean musicEnabled) {
-                // 清除开始界面
-                frame.getContentPane().removeAll();
-                
-                // 创建游戏界面
-                Game game = new Game(difficulty);
-                frame.add(game);
-                frame.revalidate();
-                frame.repaint();
-                
-                // 启动游戏
-                game.action();
+                startGame(frame, difficulty, musicEnabled);
             }
         });
         
         frame.add(startPanel);
-        frame.setVisible(true);
+        frame.revalidate();
+        frame.repaint();
+    }
+    
+    /**
+     * 开始游戏
+     */
+    private static void startGame(JFrame frame, int difficulty, boolean musicEnabled) {
+        // 清除当前界面
+        frame.getContentPane().removeAll();
+        
+        // 创建游戏界面
+        Game game = new Game(difficulty);
+        
+        // 设置游戏结束回调
+        game.setGameOverCallback(new Game.GameOverCallback() {
+            @Override
+            public void onGameOver(int score, int difficulty) {
+                handleGameOver(frame, score, difficulty);
+            }
+        });
+        
+        frame.add(game);
+        frame.revalidate();
+        frame.repaint();
+        
+        // 启动游戏
+        game.action();
+    }
+    
+    /**
+     * 处理游戏结束
+     */
+    private static void handleGameOver(JFrame frame, int score, int difficulty) {
+        // 显示用户名输入对话框
+        UserNameInputDialog nameDialog = new UserNameInputDialog(frame);
+        String userName = nameDialog.showDialog();
+        
+        // 如果用户输入了用户名，添加到排行榜
+        if (userName != null && !userName.trim().isEmpty()) {
+            edu.hitsz.ranklist.RankListDao rankListDao = new edu.hitsz.ranklist.RankListDaoImpl();
+            rankListDao.addRecord(userName, score, java.time.LocalDateTime.now());
+            rankListDao.saveRankList();
+        }
+        
+        // 显示游戏结束界面（排行榜）
+        showGameOverScreen(frame, difficulty);
+    }
+    
+    /**
+     * 显示游戏结束界面
+     */
+    private static void showGameOverScreen(JFrame frame, int difficulty) {
+        // 清除当前界面
+        frame.getContentPane().removeAll();
+        
+        // 获取难度文本
+        String difficultyText = getDifficultyText(difficulty);
+        
+        // 创建游戏结束界面
+        GameOverPanel gameOverPanel = new GameOverPanel(difficultyText);
+        gameOverPanel.setGameOverListener(new GameOverPanel.GameOverListener() {
+            @Override
+            public void onRestart() {
+                showStartScreen(frame);
+            }
+            
+            @Override
+            public void onBackToMenu() {
+                showStartScreen(frame);
+            }
+        });
+        
+        frame.add(gameOverPanel);
+        frame.revalidate();
+        frame.repaint();
+    }
+    
+    /**
+     * 获取难度文本
+     */
+    private static String getDifficultyText(int difficulty) {
+        switch (difficulty) {
+            case 1: return "简单";
+            case 2: return "普通";
+            case 3: return "困难";
+            default: return "普通";
+        }
     }
 }
