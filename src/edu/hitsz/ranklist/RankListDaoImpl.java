@@ -22,4 +22,10 @@ public class RankListDaoImpl implements RankListDao{
         rankList = RankList.getInstance();
         rankList.storeRankList();
     }
+
+    @Override
+    public void deleteRecord(int id) {
+        rankList = RankList.getInstance();
+        rankList.deleteRecord(id) ;
+    }
 }

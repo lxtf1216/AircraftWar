@@ -3,12 +3,13 @@ package edu.hitsz.ranklist;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
 
 public class RankList {
     private static volatile RankList Instance;
-    private final PriorityQueue<UserGameRecord> recordHeap;
+    private PriorityQueue<UserGameRecord> recordHeap;
     private static final String SAVE_FILE = "ranklist.dat";
     private RankList() {
         this.recordHeap = new PriorityQueue<>(
@@ -78,5 +79,16 @@ public class RankList {
             // 格式化为 MM-dd HH:mm
             System.out.printf("第%d名：%s,%d,%s%n", rank, record.getName(), record.getScore(), timeStr);
         }
+     }
+
+     public void deleteRecord(int id) {
+         PriorityQueue<UserGameRecord> newRecordHeap =  new PriorityQueue<>();
+         int size = recordHeap.size();
+         for(int i=0;i<size;++i) {
+             UserGameRecord record = recordHeap.poll();
+             if(i==id) continue;
+             newRecordHeap.add(record);
+         }
+         recordHeap=newRecordHeap;
      }
 }
