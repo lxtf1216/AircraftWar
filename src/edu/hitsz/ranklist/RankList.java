@@ -82,13 +82,33 @@ public class RankList {
      }
 
      public void deleteRecord(int id) {
-         PriorityQueue<UserGameRecord> newRecordHeap =  new PriorityQueue<>();
-         int size = recordHeap.size();
-         for(int i=0;i<size;++i) {
-             UserGameRecord record = recordHeap.poll();
-             if(i==id) continue;
-             newRecordHeap.add(record);
+         // 将PriorityQueue转换为有序列表
+         List<UserGameRecord> sortedList = new ArrayList<>();
+         PriorityQueue<UserGameRecord> tempHeap = new PriorityQueue<>(recordHeap);
+         while (!tempHeap.isEmpty()) {
+             sortedList.add(tempHeap.poll());
          }
-         recordHeap=newRecordHeap;
+         
+         // 检查索引是否有效
+         if (id >= 0 && id < sortedList.size()) {
+             // 删除指定索引的记录
+             sortedList.remove(id);
+             
+             // 重新构建PriorityQueue
+             recordHeap.clear();
+             recordHeap.addAll(sortedList);
+         }
+     }
+     
+     /**
+      * 获取所有记录的有序列表（按分数降序）
+      */
+     public List<UserGameRecord> getAllRecords() {
+         List<UserGameRecord> records = new ArrayList<>();
+         PriorityQueue<UserGameRecord> tempHeap = new PriorityQueue<>(recordHeap);
+         while (!tempHeap.isEmpty()) {
+             records.add(tempHeap.poll());
+         }
+         return records;
      }
 }

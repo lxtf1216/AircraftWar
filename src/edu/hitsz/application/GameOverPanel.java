@@ -178,8 +178,8 @@ public class GameOverPanel extends JPanel {
     
     private void loadRankListData() {
         try {
-            RankList rankListInstance = RankList.getInstance();
-            gameRecords = getRankListRecords(rankListInstance);
+            edu.hitsz.ranklist.RankListDao rankListDao = new edu.hitsz.ranklist.RankListDaoImpl();
+            gameRecords = rankListDao.getAllRecords();
             updateListDisplay();
         } catch (Exception e) {
             e.printStackTrace();
@@ -188,27 +188,6 @@ public class GameOverPanel extends JPanel {
                 "错误",
                 JOptionPane.ERROR_MESSAGE);
         }
-    }
-    
-    private List<UserGameRecord> getRankListRecords(RankList rankListInstance) {
-        List<UserGameRecord> records = new ArrayList<>();
-        
-        // 通过反射获取排行榜数据（因为RankList没有提供获取所有记录的公共方法）
-        try {
-            java.lang.reflect.Field field = RankList.class.getDeclaredField("recordHeap");
-            field.setAccessible(true);
-            PriorityQueue<UserGameRecord> heap = (PriorityQueue<UserGameRecord>) field.get(rankListInstance);
-            
-            // 创建临时队列以保持原队列不变
-            PriorityQueue<UserGameRecord> tempHeap = new PriorityQueue<>(heap);
-            while (!tempHeap.isEmpty()) {
-                records.add(tempHeap.poll());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
-        return records;
     }
     
     private void updateListDisplay() {
@@ -232,10 +211,10 @@ public class GameOverPanel extends JPanel {
     private void deleteRecord(int index) {
         try {
             if (index >= 0 && index < gameRecords.size()) {
-                // 从RankList中删除记录
-                RankList rankListInstance = RankList.getInstance();
-                rankListInstance.deleteRecord(index);
-                rankListInstance.storeRankList();
+                // 使用DAO接口删除记录
+                edu.hitsz.ranklist.RankListDao rankListDao = new edu.hitsz.ranklist.RankListDaoImpl();
+                rankListDao.deleteRecord(index);
+                rankListDao.saveRankList();
                 
                 // 重新加载数据
                 loadRankListData();

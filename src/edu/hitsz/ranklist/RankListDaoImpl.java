@@ -2,6 +2,7 @@ package edu.hitsz.ranklist;
 
 import javax.print.attribute.standard.RequestingUserName;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class RankListDaoImpl implements RankListDao{
     private RankList rankList;
@@ -26,6 +27,12 @@ public class RankListDaoImpl implements RankListDao{
     @Override
     public void deleteRecord(int id) {
         rankList = RankList.getInstance();
-        rankList.deleteRecord(id) ;
+        rankList.deleteRecord(id);
+    }
+    
+    @Override
+    public List<UserGameRecord> getAllRecords() {
+        rankList = RankList.getInstance();
+        return rankList.getAllRecords();
     }
 }
