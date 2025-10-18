@@ -46,6 +46,16 @@ public class Game extends JPanel {
      * 当前背景图片
      */
     private BufferedImage currentBackgroundImage;
+    
+    /**
+     * 音效管理器
+     */
+    private SoundManager soundManager;
+    
+    /**
+     * 是否有Boss在场
+     */
+    private boolean bossPresent = false;
 
     /**
      * Scheduled 线程池，用于任务调度
@@ -119,6 +129,9 @@ public class Game extends JPanel {
     public Game(int difficulty) {
         this.difficulty = difficulty;
         
+        // 初始化音效管理器
+        soundManager = SoundManager.getInstance();
+        
         // 根据难度设置背景图片
         switch (difficulty) {
             case 1:
@@ -157,11 +170,21 @@ public class Game extends JPanel {
         new HeroController(this, heroAircraft);
 
     }
+    
+    /**
+     * 设置音效开关
+     */
+    public void setSoundEnabled(boolean enabled) {
+        soundManager.setSoundEnabled(enabled);
+    }
 
     /**
      * 游戏启动入口，执行游戏逻辑
      */
     public void action() {
+        
+        // 开始播放普通背景音乐
+        soundManager.playNormalBGM();
 
         // 定时任务：绘制、对象产生、碰撞判定、击毁及结束判定
         Runnable task = () -> {
@@ -198,6 +221,12 @@ public class Game extends JPanel {
                             60
                     );
                     enemyAircrafts.add(boss);
+                    
+                    // Boss出现时切换到Boss背景音乐
+                    if (!bossPresent) {
+                        bossPresent = true;
+                        soundManager.playBossBGM();
+                    }
                 }
                 // 飞机射出子弹
                 try {
@@ -232,6 +261,10 @@ public class Game extends JPanel {
                 executorService.shutdown();
                 gameOverFlag = true;
                 System.out.println("Game Over!");
+                
+                // 停止所有音效并播放游戏结束音效
+                soundManager.stopAllSounds();
+                soundManager.playGameOverSound();
                 
                 // 调用游戏结束回调
                 if (gameOverCallback != null) {
@@ -270,7 +303,12 @@ public class Game extends JPanel {
             enemyBullets.addAll(enemyAircraft.shoot());
         }
         // 英雄射击
-        heroBullets.addAll(heroAircraft.shoot());
+        List<BaseBullet> newHeroBullets = heroAircraft.shoot();
+        if (!newHeroBullets.isEmpty()) {
+            // 播放子弹发射音效
+            soundManager.playBulletSound();
+        }
+        heroBullets.addAll(newHeroBullets);
     }
     private void supplyMoveAction() {
         for(BaseSupply supply: supplies) {
@@ -332,6 +370,8 @@ public class Game extends JPanel {
                 //敌机子弹打到英雄机
                 heroAircraft.decreaseHp(bullet.getPower());
                 bullet.vanish();
+                // 播放子弹击中音效
+                soundManager.playBulletHitSound();
             }
         }
 
@@ -351,17 +391,28 @@ public class Game extends JPanel {
                     // 敌机损失一定生命值
                     enemyAircraft.decreaseHp(bullet.getPower());
                     bullet.vanish();
+                    // 播放子弹击中音效
+                    soundManager.playBulletHitSound();
+                    
                     if (enemyAircraft.notValid()) {
                         //  获得分数，产生道具补给
                         score += 10;
                         bossscore += 10;
                         deathOfEnemy(enemyAircraft);
+                        
+                        // 如果击毁的是Boss，切换回普通背景音乐
+                        if (enemyAircraft instanceof BossEnemy) {
+                            bossPresent = false;
+                            soundManager.playNormalBGM();
+                        }
                     }
                 }
                 // 英雄机 与 敌机 相撞，均损毁
                 if (enemyAircraft.crash(heroAircraft) || heroAircraft.crash(enemyAircraft)) {
                     enemyAircraft.vanish();
                     heroAircraft.decreaseHp(100);
+                    // 播放子弹击中音效
+                    soundManager.playBulletHitSound();
                 }
             }
         }
@@ -370,9 +421,14 @@ public class Game extends JPanel {
         for(BaseSupply supply:supplies) {
             if(supply.notValid()) continue;
             if(heroAircraft.crash(supply)) {
+                // 播放获得道具音效
+                soundManager.playGetSupplySound();
+                
                 if(supply.getKind() == 0) heroAircraft.addHp(supply.active());
                 if(supply.getKind() == 1) {
                     int cnt = supply.active();
+                    // 播放炸弹爆炸音效
+                    soundManager.playBombExplosionSound();
                     for(int i=0;i<cnt;++i)
                         heroBullets.addAll(heroAircraft.shootCircle());
                 }
@@ -401,6 +457,21 @@ public class Game extends JPanel {
         heroBullets.removeIf(AbstractFlyingObject::notValid);
         enemyAircrafts.removeIf(AbstractFlyingObject::notValid);
         supplies.removeIf(AbstractFlyingObject::notValid);
+        
+        // 检查是否还有Boss在场
+        boolean hasBoss = false;
+        for (AbstractAircraft aircraft : enemyAircrafts) {
+            if (aircraft instanceof BossEnemy) {
+                hasBoss = true;
+                break;
+            }
+        }
+        
+        // 如果之前有Boss但现在没有了，切换回普通背景音乐
+        if (bossPresent && !hasBoss) {
+            bossPresent = false;
+            soundManager.playNormalBGM();
+        }
     }
 
 

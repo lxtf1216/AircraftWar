@@ -61,6 +61,9 @@ public class Main {
         // 创建游戏界面
         Game game = new Game(difficulty);
         
+        // 设置音效开关
+        game.setSoundEnabled(musicEnabled);
+        
         // 设置游戏结束回调
         game.setGameOverCallback(new Game.GameOverCallback() {
             @Override
