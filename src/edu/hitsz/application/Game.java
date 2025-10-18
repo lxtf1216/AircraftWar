@@ -218,7 +218,7 @@ public class Game extends JPanel {
                             (int) (Math.random() * Main.WINDOW_HEIGHT * 0.05),
                             5,
                             0,
-                            60
+                            600
                     );
                     enemyAircrafts.add(boss);
                     
@@ -259,6 +259,7 @@ public class Game extends JPanel {
             if (heroAircraft.getHp() <= 0) {
                 // 游戏结束
                 executorService.shutdown();
+                heroAircraft.shutdown(); // 关闭英雄机的线程池
                 gameOverFlag = true;
                 System.out.println("Game Over!");
                 
@@ -433,11 +434,12 @@ public class Game extends JPanel {
                         heroBullets.addAll(heroAircraft.shootCircle());
                 }
                 if(supply.getKind() == 2) {
-                    System.out.println("fire supply active!");
-                    heroAircraft.changeShootStrategy(new shootScatter());
+                    BulletSupply bulletSupply = (BulletSupply) supply;
+                    bulletSupply.activateEffect(heroAircraft);
                 }
                 if(supply.getKind() == 3) {
-                    heroAircraft.changeShootStrategy(new shootCircle());
+                    BulletPlusSupply bulletPlusSupply = (BulletPlusSupply) supply;
+                    bulletPlusSupply.activateEffect(heroAircraft);
                 }
                 supply.vanish();
             }
