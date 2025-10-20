@@ -133,30 +133,4 @@ public class HeroAircraft extends AbstractAircraft {
             powerUpExecutor.shutdown();
         }
     }
-    public List<BaseBullet> shootCircle() {
-        int radius = 80;
-        List<BaseBullet> res = new LinkedList<>();
-        int x = this.getLocationX();
-        int y = this.getLocationY();
-
-        int bulletCount = 10;
-
-        for (int i = 0; i < bulletCount; i++) {
-            double angle = 2 * Math.PI * i / bulletCount;
-
-            int offsetX = (int) (Math.cos(angle) * radius);
-            int offsetY = (int) (Math.sin(angle) * radius);
-
-            int bulletX = x + offsetX;
-            int bulletY = y + offsetY;
-
-            int speedX = 0;
-            int speedY = direction*10;
-
-            BaseBullet bullet = new HeroBullet(bulletX, bulletY, speedX, speedY, power);
-            res.add(bullet);
-        }
-
-        return res;
-    }
 }

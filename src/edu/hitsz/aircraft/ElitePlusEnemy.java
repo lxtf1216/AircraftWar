@@ -10,7 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ElitePlusEnemy extends AbstractAircraft implements EnemyAircraft{
+public class ElitePlusEnemy extends AbstractAircraft implements EnemyAircraft,CanBeBlownUp{
     final private shootStrategy shootstrategy = new shootScatter();
     public ElitePlusEnemy(int locationX, int locationY, int speedX, int speedY, int hp) {
         super(locationX, locationY, speedX, speedY, hp);
@@ -30,5 +30,10 @@ public class ElitePlusEnemy extends AbstractAircraft implements EnemyAircraft{
         if(locationY >= Main.WINDOW_HEIGHT) {
             vanish();
         }
+    }
+
+    @Override
+    public void beblownup() {
+        decreaseHp(maxHp);
     }
 }

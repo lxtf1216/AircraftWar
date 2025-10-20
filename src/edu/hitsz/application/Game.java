@@ -430,8 +430,6 @@ public class Game extends JPanel {
                     int cnt = supply.active();
                     // 播放炸弹爆炸音效
                     soundManager.playBombExplosionSound();
-                    for(int i=0;i<cnt;++i)
-                        heroBullets.addAll(heroAircraft.shootCircle());
                 }
                 if(supply.getKind() == 2) {
                     BulletSupply bulletSupply = (BulletSupply) supply;

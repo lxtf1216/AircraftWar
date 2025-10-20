@@ -13,7 +13,7 @@ import java.util.List;
  *
  * @author hitsz
  */
-public class MobEnemy extends AbstractAircraft implements EnemyAircraft{
+public class MobEnemy extends AbstractAircraft implements EnemyAircraft,CanBeBlownUp{
 
     public MobEnemy(int locationX, int locationY, int speedX, int speedY, int hp) {
         super(locationX, locationY, speedX, speedY, hp);
@@ -33,5 +33,9 @@ public class MobEnemy extends AbstractAircraft implements EnemyAircraft{
         return new LinkedList<>();
     }
 
+    @Override
+    public void beblownup() {
+        decreaseHp(maxHp);
+    }
 }
 
