@@ -209,6 +209,13 @@ public class Game extends JPanel {
                             10,
                             30+(choice>=3?1:0)*15 + (choice>=5?1:0)*15);//不同的敌机血量不同
                     enemyAircrafts.add((AbstractAircraft) enemyaircraft);
+                    if(enemyaircraft instanceof CanBeBlownUp ) {
+                        for(BaseSupply sp :supplies) {
+                            if(sp instanceof BombSupply) {
+                                ((BombSupply)sp) .addenemy((CanBeBlownUp) enemyaircraft);
+                            }
+                        }
+                    }
                 }
                 //boss机产生
                 if(bossscore >= 100) {
@@ -218,7 +225,7 @@ public class Game extends JPanel {
                             (int) (Math.random() * Main.WINDOW_HEIGHT * 0.05),
                             5,
                             0,
-                            600
+                            1000
                     );
                     enemyAircrafts.add(boss);
                     
@@ -350,6 +357,13 @@ public class Game extends JPanel {
         if(rnd < 12 ) supply = supplyFactory.createNewSupply(enemyAircraft.getLocationX(),enemyAircraft.getLocationY(),speedX,speedY
         );
         if(rnd < 12 ) supplies.add((BaseSupply) supply);
+        if(rnd < 3) {
+            for(AbstractAircraft enemy:enemyAircrafts) {
+                if(!enemy.notValid() && enemy instanceof CanBeBlownUp) {
+                    ((BombSupply)supply).addenemy((CanBeBlownUp) enemy);
+                }
+            }
+        }
     }
     public void deathOfEnemy(AbstractAircraft enemyAircraft) {
         if(enemyAircraft instanceof EliteEnemy || enemyAircraft instanceof ElitePlusEnemy ) {
@@ -411,6 +425,7 @@ public class Game extends JPanel {
                 // 英雄机 与 敌机 相撞，均损毁
                 if (enemyAircraft.crash(heroAircraft) || heroAircraft.crash(enemyAircraft)) {
                     enemyAircraft.vanish();
+                    produceSupply(enemyAircraft,enemyAircraft.getLocationX(),enemyAircraft.getLocationY());
                     heroAircraft.decreaseHp(100);
                     // 播放子弹击中音效
                     soundManager.playBulletHitSound();
@@ -427,8 +442,7 @@ public class Game extends JPanel {
                 
                 if(supply.getKind() == 0) heroAircraft.addHp(supply.active());
                 if(supply.getKind() == 1) {
-                    int cnt = supply.active();
-                    // 播放炸弹爆炸音效
+                    score += supply.active();
                     soundManager.playBombExplosionSound();
                 }
                 if(supply.getKind() == 2) {
