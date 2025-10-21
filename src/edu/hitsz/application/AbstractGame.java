@@ -1,4 +1,4 @@
-package edu.hitsz.application;
+ package edu.hitsz.application;
 
 import edu.hitsz.aircraft.*;
 import edu.hitsz.aircraftfactory.AircraftFactory;
@@ -28,111 +28,53 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.Random.*;
 
-/**
- * 游戏主面板，游戏启动
- *
- * @author hitsz
- */
-public class Game extends JPanel {
+public abstract class AbstractGame extends JPanel {
 
-    private int backGroundTop = 0;
+    protected int backGroundTop = 0;
     
-    /**
-     * 游戏难度 1-简单, 2-普通, 3-困难
-     */
-    private int difficulty = 2;
+    protected int difficulty;
     
-    /**
-     * 当前背景图片
-     */
-    private BufferedImage currentBackgroundImage;
+    protected BufferedImage currentBackgroundImage;
     
-    /**
-     * 音效管理器
-     */
-    private SoundManager soundManager;
+    protected SoundManager soundManager;
     
-    /**
-     * 是否有Boss在场
-     */
-    private boolean bossPresent = false;
+    protected boolean bossPresent = false;
 
-    /**
-     * Scheduled 线程池，用于任务调度
-     */
-    private final ScheduledExecutorService executorService;
+    protected final ScheduledExecutorService executorService;
 
-    /**
-     * 时间间隔(ms)，控制刷新频率
-     */
-    private int timeInterval = 40;
+    protected int timeInterval = 40;
 
-    private final HeroAircraft heroAircraft;
-    private final List<AbstractAircraft> enemyAircrafts;
-    private final List<BaseBullet> heroBullets;
-    private final List<BaseBullet> enemyBullets;
-    private final List<BaseSupply> supplies;
+    protected final HeroAircraft heroAircraft;
+    protected final List<AbstractAircraft> enemyAircrafts;
+    protected final List<BaseBullet> heroBullets;
+    protected final List<BaseBullet> enemyBullets;
+    protected final List<BaseSupply> supplies;
 
-    /**
-     * 屏幕中出现的敌机最大数量
-     */
-    private int enemyMaxNumber = 5;
+    protected int enemyMaxNumber = 5;
 
-    /**
-     * 当前得分
-     */
-    private int score = 0;
-    private int bossscore = 0;
-    /**
-     * 当前时刻
-     */
-    private int time = 0;
+    protected int score = 0;
+    protected int cntscore = 0;
+    protected int bossscore = 0;
+    protected int time = 0;
 
-    /**
-     * 周期（ms)
-     * 指示子弹的发射、敌机的产生频率
-     */
-    private int cycleDuration = 600;
-    private int cycleTime = 0;
+    protected int cycleDuration = 600;
+    protected int cycleTime = 0;
 
-    /**
-     * 排行榜
-     *
-     */
-    private RankListDao rankList;
+    protected RankListDao rankList;
 
-    /**
-     * 游戏结束标志
-     */
-    private boolean gameOverFlag = false;
+    protected boolean gameOverFlag = false;
     
-    /**
-     * 游戏结束回调接口
-     */
     public interface GameOverCallback {
         void onGameOver(int score, int difficulty);
     }
     
-    private GameOverCallback gameOverCallback;
+    protected GameOverCallback gameOverCallback;
 
-    public Game() {
-        this(2); // 默认普通难度
-    }
-    
-    /**
-     * 设置游戏结束回调
-     */
-    public void setGameOverCallback(GameOverCallback callback) {
-        this.gameOverCallback = callback;
-    }
-    
-    public Game(int difficulty) {
+    public AbstractGame(int difficulty) {
         this.difficulty = difficulty;
         
-        // 初始化音效管理器
         soundManager = SoundManager.getInstance();
         
-        // 根据难度设置背景图片
         switch (difficulty) {
             case 1:
                 currentBackgroundImage = ImageManager.BACKGROUND_IMAGE_EASY;
@@ -158,84 +100,37 @@ public class Game extends JPanel {
         enemyBullets = new LinkedList<>();
         supplies = new LinkedList<>();
         rankList = new RankListDaoImpl();
-        /**
-         * Scheduled 线程池，用于定时任务调度
-         * 关于alibaba code guide：可命名的 ThreadFactory 一般需要第三方包
-         * apache 第三方库： org.apache.commons.lang3.concurrent.BasicThreadFactory
-         */
+
         this.executorService = new ScheduledThreadPoolExecutor(1,
                 new BasicThreadFactory.Builder().namingPattern("game-action-%d").daemon(true).build());
 
-        //启动英雄机鼠标监听
         new HeroController(this, heroAircraft);
-
+        
+        setInitialParameters();
     }
     
-    /**
-     * 设置音效开关
-     */
+    public void setGameOverCallback(GameOverCallback callback) {
+        this.gameOverCallback = callback;
+    }
+    
     public void setSoundEnabled(boolean enabled) {
         soundManager.setSoundEnabled(enabled);
     }
 
-    /**
-     * 游戏启动入口，执行游戏逻辑
-     */
     public void action() {
         
-        // 开始播放普通背景音乐
         soundManager.playNormalBGM();
 
-        // 定时任务：绘制、对象产生、碰撞判定、击毁及结束判定
         Runnable task = () -> {
 
             time += timeInterval;
-            // 周期性执行（控制频率）
             if (timeCountAndNewCycleJudge()) {
                 System.out.println(time);
-                // 新敌机产生
-
-                if (enemyAircrafts.size() < enemyMaxNumber) {
-                    Random random = new Random();
-                    int choice = random.nextInt(6);
-                    AircraftFactory enemyaircraftfactory = null;
-                    EnemyAircraft enemyaircraft = null;
-                    if(choice < 3 ) enemyaircraftfactory = new MobEnemyFactory();
-                    if(choice >=3 && choice < 5) enemyaircraftfactory = new EliteEnemyFactory();
-                    if(choice == 5) enemyaircraftfactory = new ElitePlusEnemyFactory();
-                    enemyaircraft = enemyaircraftfactory.createNewEnemyAircraft((int) (Math.random() * (Main.WINDOW_WIDTH - ImageManager.MOB_ENEMY_IMAGE.getWidth())),
-                            (int) (Math.random() * Main.WINDOW_HEIGHT * 0.05),
-                            0,
-                            10,
-                            30+(choice>=3?1:0)*15 + (choice>=5?1:0)*15);//不同的敌机血量不同
-                    enemyAircrafts.add((AbstractAircraft) enemyaircraft);
-                    if(enemyaircraft instanceof CanBeBlownUp ) {
-                        for(BaseSupply sp :supplies) {
-                            if(sp instanceof BombSupply) {
-                                ((BombSupply)sp) .addenemy((CanBeBlownUp) enemyaircraft);
-                            }
-                        }
-                    }
-                }
-                //boss机产生
-                if(bossscore >= 100) {
-                    bossscore -= 100;
-                    AbstractAircraft boss = new BossEnemy(
-                            (int) (Math.random() * (Main.WINDOW_WIDTH - ImageManager.MOB_ENEMY_IMAGE.getWidth())),
-                            (int) (Math.random() * Main.WINDOW_HEIGHT * 0.05),
-                            5,
-                            0,
-                            1000
-                    );
-                    enemyAircrafts.add(boss);
-                    
-                    // Boss出现时切换到Boss背景音乐
-                    if (!bossPresent) {
-                        bossPresent = true;
-                        soundManager.playBossBGM();
-                    }
-                }
-                // 飞机射出子弹
+                
+                spawnNewEnemies();
+                
+                spawnBoss();
+                
                 try {
                     shootAction();
                 } catch (InvocationTargetException | NoSuchMethodException | InstantiationException |
@@ -244,60 +139,41 @@ public class Game extends JPanel {
                 }
             }
 
-            // 子弹移动
             bulletsMoveAction();
-
-            // 飞机移动
             aircraftsMoveAction();
-
-            //装备移动
             supplyMoveAction();
-
-            // 撞击检测
             crashCheckAction();
-
-            // 后处理
             postProcessAction();
-
-            //每个时刻重绘界面
             repaint();
 
-            // 游戏结束检查英雄机是否存活
             if (heroAircraft.getHp() <= 0) {
-                // 游戏结束
                 executorService.shutdown();
-                heroAircraft.shutdown(); // 关闭英雄机的线程池
+                heroAircraft.shutdown();
                 gameOverFlag = true;
                 System.out.println("Game Over!");
                 
-                // 停止所有音效并播放游戏结束音效
                 soundManager.stopAllSounds();
                 soundManager.playGameOverSound();
                 
-                // 调用游戏结束回调
                 if (gameOverCallback != null) {
                     SwingUtilities.invokeLater(() -> gameOverCallback.onGameOver(score, difficulty));
                 }
             }
-
+            
+            updateDifficulty();
         };
 
-        /**
-         * 以固定延迟时间进行执行
-         * 本次任务执行完成后，需要延迟设定的延迟时间，才会执行新的任务
-         */
         executorService.scheduleWithFixedDelay(task, timeInterval, timeInterval, TimeUnit.MILLISECONDS);
-
     }
 
-    //***********************
-    //      Action 各部分
-    //***********************
+    protected abstract void spawnNewEnemies();
+    protected abstract void spawnBoss();
+    protected abstract void updateDifficulty();
+    protected abstract void setInitialParameters();
 
     private boolean timeCountAndNewCycleJudge() {
         cycleTime += timeInterval;
         if (cycleTime >= cycleDuration) {
-            // 跨越到新的周期
             cycleTime %= cycleDuration;
             return true;
         } else {
@@ -306,14 +182,11 @@ public class Game extends JPanel {
     }
 
     private void shootAction() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        //  敌机射击
         for (AbstractAircraft enemyAircraft : enemyAircrafts) {
             enemyBullets.addAll(enemyAircraft.shoot());
         }
-        // 英雄射击
         List<BaseBullet> newHeroBullets = heroAircraft.shoot();
         if (!newHeroBullets.isEmpty()) {
-            // 播放子弹发射音效
             soundManager.playBulletSound();
         }
         heroBullets.addAll(newHeroBullets);
@@ -338,13 +211,6 @@ public class Game extends JPanel {
         }
     }
 
-
-    /**
-     * 碰撞检测：
-     * 1. 敌机攻击英雄
-     * 2. 英雄攻击/撞击敌机
-     * 3. 英雄获得补给
-     */
     private void produceSupply(AbstractAircraft enemyAircraft,int speedX,int speedY) {
         Random random = new Random();
         int rnd = random.nextInt(13);
@@ -376,73 +242,61 @@ public class Game extends JPanel {
         }
     }
     private void crashCheckAction() {
-        //  敌机子弹攻击英雄
         for(BaseBullet bullet:enemyBullets) {
             if(bullet.notValid()) {
                 continue;
             }
             if(heroAircraft.crash(bullet)) {
-                //敌机子弹打到英雄机
                 heroAircraft.decreaseHp(bullet.getPower());
                 bullet.vanish();
-                // 播放子弹击中音效
                 soundManager.playBulletHitSound();
             }
         }
 
-        // 英雄子弹攻击敌机
         for (BaseBullet bullet : heroBullets) {
             if (bullet.notValid()) {
                 continue;
             }
             for (AbstractAircraft enemyAircraft : enemyAircrafts) {
                 if (enemyAircraft.notValid()) {
-                    // 已被其他子弹击毁的敌机，不再检测
-                    // 避免多个子弹重复击毁同一敌机的判定
                     continue;
                 }
                 if (enemyAircraft.crash(bullet)) {
-                    // 敌机撞击到英雄机子弹
-                    // 敌机损失一定生命值
                     enemyAircraft.decreaseHp(bullet.getPower());
                     bullet.vanish();
-                    // 播放子弹击中音效
                     soundManager.playBulletHitSound();
                     
                     if (enemyAircraft.notValid()) {
-                        //  获得分数，产生道具补给
                         score += 10;
+                        cntscore += 10;
                         bossscore += 10;
                         deathOfEnemy(enemyAircraft);
                         
-                        // 如果击毁的是Boss，切换回普通背景音乐
                         if (enemyAircraft instanceof BossEnemy) {
                             bossPresent = false;
                             soundManager.playNormalBGM();
                         }
                     }
                 }
-                // 英雄机 与 敌机 相撞，均损毁
                 if (enemyAircraft.crash(heroAircraft) || heroAircraft.crash(enemyAircraft)) {
                     enemyAircraft.vanish();
                     produceSupply(enemyAircraft,enemyAircraft.getLocationX(),enemyAircraft.getLocationY());
                     heroAircraft.decreaseHp(100);
-                    // 播放子弹击中音效
                     soundManager.playBulletHitSound();
                 }
             }
         }
 
-        //  我方获得道具，道具生效
         for(BaseSupply supply:supplies) {
             if(supply.notValid()) continue;
             if(heroAircraft.crash(supply)) {
-                // 播放获得道具音效
                 soundManager.playGetSupplySound();
                 
                 if(supply.getKind() == 0) heroAircraft.addHp(supply.active());
                 if(supply.getKind() == 1) {
-                    score += supply.active();
+                    int dscore = supply.active();
+                    score += dscore;
+                    cntscore += dscore;
                     soundManager.playBombExplosionSound();
                 }
                 if(supply.getKind() == 2) {
@@ -459,20 +313,12 @@ public class Game extends JPanel {
 
     }
 
-    /**
-     * 后处理：
-     * 1. 删除无效的子弹
-     * 2. 删除无效的敌机
-     * <p>
-     * 无效的原因可能是撞击或者飞出边界
-     */
     private void postProcessAction() {
         enemyBullets.removeIf(AbstractFlyingObject::notValid);
         heroBullets.removeIf(AbstractFlyingObject::notValid);
         enemyAircrafts.removeIf(AbstractFlyingObject::notValid);
         supplies.removeIf(AbstractFlyingObject::notValid);
         
-        // 检查是否还有Boss在场
         boolean hasBoss = false;
         for (AbstractAircraft aircraft : enemyAircrafts) {
             if (aircraft instanceof BossEnemy) {
@@ -481,29 +327,16 @@ public class Game extends JPanel {
             }
         }
         
-        // 如果之前有Boss但现在没有了，切换回普通背景音乐
         if (bossPresent && !hasBoss) {
             bossPresent = false;
             soundManager.playNormalBGM();
         }
     }
 
-
-    //***********************
-    //      Paint 各部分
-    //***********************
-
-    /**
-     * 重写paint方法
-     * 通过重复调用paint方法，实现游戏动画
-     *
-     * @param  g
-     */
     @Override
     public void paint(Graphics g) {
         super.paint(g);
 
-        // 绘制背景,图片滚动
         g.drawImage(currentBackgroundImage, 0, this.backGroundTop - Main.WINDOW_HEIGHT, null);
         g.drawImage(currentBackgroundImage, 0, this.backGroundTop, null);
         this.backGroundTop += 1;
@@ -511,8 +344,6 @@ public class Game extends JPanel {
             this.backGroundTop = 0;
         }
 
-        // 先绘制子弹，后绘制飞机
-        // 这样子弹显示在飞机的下层
         paintImageWithPositionRevised(g, enemyBullets);
         paintImageWithPositionRevised(g, heroBullets);
 
@@ -522,7 +353,6 @@ public class Game extends JPanel {
         g.drawImage(ImageManager.HERO_IMAGE, heroAircraft.getLocationX() - ImageManager.HERO_IMAGE.getWidth() / 2,
                 heroAircraft.getLocationY() - ImageManager.HERO_IMAGE.getHeight() / 2, null);
 
-        //绘制得分和生命值
         paintScoreAndLife(g);
 
     }
@@ -549,6 +379,4 @@ public class Game extends JPanel {
         y = y + 20;
         g.drawString("LIFE:" + this.heroAircraft.getHp(), x, y);
     }
-
-
 }

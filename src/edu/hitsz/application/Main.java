@@ -59,13 +59,27 @@ public class Main {
         frame.getContentPane().removeAll();
         
         // 创建游戏界面
-        Game game = new Game(difficulty);
+        AbstractGame game;
+        switch (difficulty) {
+            case 1:
+                game = new EasyGame();
+                break;
+            case 2:
+                game = new NormalGame();
+                break;
+            case 3:
+                game = new HardGame();
+                break;
+            default:
+                game = new NormalGame();
+                break;
+        }
         
         // 设置音效开关
         game.setSoundEnabled(musicEnabled);
         
         // 设置游戏结束回调
-        game.setGameOverCallback(new Game.GameOverCallback() {
+        game.setGameOverCallback(new AbstractGame.GameOverCallback() {
             @Override
             public void onGameOver(int score, int difficulty) {
                 handleGameOver(frame, score, difficulty);

@@ -11,7 +11,7 @@ public class GameManager {
     
     private JFrame mainFrame;
     private StartGamePanel startGamePanel;
-    private Game gamePanel;
+    private AbstractGame gamePanel;
     private GameOverPanel gameOverPanel;
     
     // 游戏设置
@@ -67,11 +67,23 @@ public class GameManager {
         // 清除当前内容
         mainFrame.getContentPane().removeAll();
         
-        // 创建游戏界面
-        gamePanel = new Game();
+        // 根据难度创建不同的游戏实例
+        switch (currentDifficulty) {
+            case 1:
+                gamePanel = new EasyGame();
+                break;
+            case 2:
+                gamePanel = new NormalGame();
+                break;
+            case 3:
+                gamePanel = new HardGame();
+                break;
+            default:
+                gamePanel = new NormalGame();
+                break;
+        }
         
-        // 这里可以根据难度设置游戏参数
-        // 由于要求不修改现有代码，暂时使用默认设置
+        gamePanel.setSoundEnabled(musicEnabled);
         
         mainFrame.add(gamePanel);
         mainFrame.revalidate();
@@ -80,44 +92,17 @@ public class GameManager {
         // 启动游戏
         gamePanel.action();
         
-        // 监听游戏结束（这里需要修改Game类来支持回调，但按要求不修改现有代码）
-        // 暂时使用定时器检查游戏状态
-        Timer gameStatusTimer = new Timer(1000, e -> {
-            if (isGameOver()) {
-                ((Timer) e.getSource()).stop();
-                handleGameOver();
-            }
+        // 设置游戏结束回调
+        gamePanel.setGameOverCallback((score, difficulty) -> {
+            handleGameOver(score);
         });
-        gameStatusTimer.start();
-    }
-    
-    /**
-     * 检查游戏是否结束
-     * 这是一个简化的实现，实际应该通过Game类的回调来处理
-     */
-    private boolean isGameOver() {
-        try {
-            // 通过反射检查游戏结束标志
-            java.lang.reflect.Field field = Game.class.getDeclaredField("gameOverFlag");
-            field.setAccessible(true);
-            return (Boolean) field.get(gamePanel);
-        } catch (Exception e) {
-            return false;
-        }
     }
     
     /**
      * 处理游戏结束
      */
-    private void handleGameOver() {
-        // 获取游戏分数
-        try {
-            java.lang.reflect.Field scoreField = Game.class.getDeclaredField("score");
-            scoreField.setAccessible(true);
-            currentScore = (Integer) scoreField.get(gamePanel);
-        } catch (Exception e) {
-            currentScore = 0;
-        }
+    private void handleGameOver(int score) {
+        this.currentScore = score;
         
         // 显示用户名输入对话框
         UserNameInputDialog nameDialog = new UserNameInputDialog(mainFrame);
@@ -125,20 +110,12 @@ public class GameManager {
         
         // 如果用户输入了用户名，添加到排行榜
         if (userName != null && !userName.trim().isEmpty()) {
-            try {
-                java.lang.reflect.Field rankListField = Game.class.getDeclaredField("rankList");
-                rankListField.setAccessible(true);
-                Object rankListDao = rankListField.get(gamePanel);
-                
-                // 调用addRecord方法
-                rankListDao.getClass().getMethod("addRecord", String.class, int.class, java.time.LocalDateTime.class)
-                        .invoke(rankListDao, userName, currentScore, java.time.LocalDateTime.now());
-                
-                // 保存排行榜
-                rankListDao.getClass().getMethod("saveRankList").invoke(rankListDao);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            // 访问排行榜DAO并添加记录
+            // 注意：这里假设 AbstractGame 中 rankList 是 protected 的
+            // 如果不是，需要提供一个 getter 方法
+            // 为了简单起见，我们直接访问（在 AbstractGame 中已设为 protected）
+            gamePanel.rankList.addRecord(userName, currentScore, java.time.LocalDateTime.now());
+            gamePanel.rankList.saveRankList();
         }
         
         // 显示游戏结束界面
