@@ -68,7 +68,7 @@ public class HardGame extends AbstractGame {
             }
         }
     }
-
+/
     @Override
     protected void spawnBoss() {
         if (bossscore >= 100 && !bossPresent) {

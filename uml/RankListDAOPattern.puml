@@ -4,6 +4,8 @@ interface RankListDao {
     + addRecord(name: String, score: int, time: LocalDateTime): void
     + printRankList(): void
     + saveRankList(): void
+    + deleteRecord(id: int): void
+    + getAllRecords(): List<UserGameRecord>
 }
 
 class RankListDaoImpl {
@@ -25,7 +27,7 @@ class RankList {
     + printAllRecords(): void
 }
 
-class UserGameRecord {
+class UserGameRecord implements Serializable {
     - {static} serialVersionUID: long
     - name: String
     - score: int

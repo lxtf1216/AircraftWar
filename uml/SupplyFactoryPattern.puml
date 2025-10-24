@@ -7,19 +7,23 @@ skinparam classFontStyle bold
 title 道具生产工厂模式
 
 interface SupplyFactory {
-    + Supply createNewSupply()
+    + Supply createNewSupply(int LocationX, int LocationY, int SpeedX, int SpeedY)
 }
 
 class HpSupplyFactory {
-    + Supply createNewSupply()
+    + Supply createNewSupply(int LocationX, int LocationY, int SpeedX, int SpeedY)
 }
 
 class BulletSupplyFactory {
-    + Supply createNewSupply()
+    + Supply createNewSupply(int LocationX, int LocationY, int SpeedX, int SpeedY)
 }
 
 class BombSupplyFactory {
-    + Supply createNewSupply()
+    + Supply createNewSupply(int LocationX, int LocationY, int SpeedX, int SpeedY)
+}
+
+class BulletPlusSupplyFactory {
+    + Supply createNewSupply(int LocationX, int LocationY, int SpeedX, int SpeedY)
 }
 
 interface Supply {
@@ -34,17 +38,23 @@ class BulletSupply {
 class BombSupply {
 }
 
+class BulletPlusSupply {
+}
+
 SupplyFactory <|.. HpSupplyFactory
 SupplyFactory <|.. BulletSupplyFactory
 SupplyFactory <|.. BombSupplyFactory
+SupplyFactory <|.. BulletPlusSupplyFactory
 
 Supply <|.. HpSupply
 Supply <|.. BulletSupply
 Supply <|.. BombSupply
+Supply <|.. BulletPlusSupply
 
 HpSupplyFactory ..> HpSupply : creates
 BulletSupplyFactory ..> BulletSupply : creates
 BombSupplyFactory ..> BombSupply : creates
+BulletPlusSupplyFactory ..> BulletPlusSupply : creates
 
 note top of SupplyFactory : 工厂模式核心要素:\n- 抽象工厂接口\n- 具体工厂实现\n- 产品接口\n- 具体产品实现\n- 客户端与具体产品解耦
 

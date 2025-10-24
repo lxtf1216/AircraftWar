@@ -14,127 +14,135 @@ package "basic" {
         # int width
         # int height
         # boolean isValid
-        
-        + AbstractFlyingObject()
         + AbstractFlyingObject(int, int, int, int)
         + void forward()
         + boolean crash(AbstractFlyingObject)
-        + int getLocationX()
-        + int getLocationY()
-        + void setLocation(double, double)
-        + int getSpeedY()
-        + BufferedImage getImage()
-        + int getWidth()
-        + int getHeight()
         + boolean notValid()
         + void vanish()
     }
 }
 
 package "aircraft" {
-    abstract class AbstractAircraft {
+    interface CanBeBlownUp {
+        + void beblownup()
+    }
+
+    interface EnemyAircraft {
+        + List<BaseBullet> shoot()
+    }
+
+    abstract class AbstractAircraft extends AbstractFlyingObject {
         # int maxHp
         # int hp
-        
         + AbstractAircraft(int, int, int, int, int)
         + void decreaseHp(int)
         + int getHp()
-        + {abstract} List<BaseBullet> shoot()
     }
-    
-    class HeroAircraft {
+
+    class HeroAircraft extends AbstractAircraft {
         - int shootNum
         - int power
         - int direction
-        
-        + HeroAircraft(int, int, int, int, int)
-        + void forward()
         + List<BaseBullet> shoot()
         + void addHp(int)
     }
-    
-    class MobEnemy {
-        + MobEnemy(int, int, int, int, int)
-        + void forward()
+
+    class MobEnemy extends AbstractAircraft implements EnemyAircraft, CanBeBlownUp {
         + List<BaseBullet> shoot()
     }
-    
-    class EliteEnemy {
+
+    class EliteEnemy extends AbstractAircraft implements EnemyAircraft, CanBeBlownUp {
         - int shootNum
         - int power
         - int direction
-        
-        + EliteEnemy(int, int, int, int, int)
-        + void forward()
+        + List<BaseBullet> shoot()
+    }
+
+    class ElitePlusEnemy extends AbstractAircraft implements EnemyAircraft, CanBeBlownUp {
+        + List<BaseBullet> shoot()
+    }
+
+    class BossEnemy extends AbstractAircraft implements EnemyAircraft {
+        - int shootcount
         + List<BaseBullet> shoot()
     }
 }
 
 package "bullet" {
-    abstract class BaseBullet {
+    abstract class BaseBullet extends AbstractFlyingObject {
         - int power
-        
         + BaseBullet(int, int, int, int, int)
-        + void forward()
         + int getPower()
     }
-    
-    class HeroBullet {
-        + HeroBullet(int, int, int, int, int)
+
+    class HeroBullet extends BaseBullet {
     }
-    
-    class EnemyBullet {
-        + EnemyBullet(int, int, int, int, int)
+
+    class EnemyBullet extends BaseBullet {
     }
 }
 
 package "supply" {
-    abstract class BaseSupply {
+    interface Supply {
+        + int active()
+    }
+
+    abstract class BaseSupply extends AbstractFlyingObject implements Supply {
         # int kind
-        
         + BaseSupply(int, int, int, int)
-        + void forward()
         + {abstract} int active()
-        + int getKind()
     }
-    
-    class HpSupply {
+
+    class HpSupply extends BaseSupply {
         - int hp
-        
-        + HpSupply(int, int, int, int)
+        + int active()
+    }
+
+    class BulletSupply extends BaseSupply {
         + int active()
     }
     
-    class BulletSupply {
-        + BulletSupply(int, int, int, int)
+    class BulletPlusSupply extends BaseSupply {
         + int active()
     }
-    
-    class BombSupply {
-        + BombSupply(int, int, int, int)
+
+    class BombSupply extends BaseSupply implements CanBeBlownUp {
         + int active()
+        + void beblownup()
     }
 }
 
-' 继承关系
-AbstractFlyingObject <|-- AbstractAircraft
-AbstractFlyingObject <|-- BaseBullet
-AbstractFlyingObject <|-- BaseSupply
-
+' 继承与实现关系
 AbstractAircraft <|-- HeroAircraft
 AbstractAircraft <|-- MobEnemy
 AbstractAircraft <|-- EliteEnemy
+AbstractAircraft <|-- ElitePlusEnemy
+AbstractAircraft <|-- BossEnemy
+
+EnemyAircraft <|.. MobEnemy
+EnemyAircraft <|.. EliteEnemy
+EnemyAircraft <|.. ElitePlusEnemy
+EnemyAircraft <|.. BossEnemy
+
+CanBeBlownUp <|.. MobEnemy
+CanBeBlownUp <|.. EliteEnemy
+CanBeBlownUp <|.. ElitePlusEnemy
+CanBeBlownUp <|.. BombSupply
 
 BaseBullet <|-- HeroBullet
 BaseBullet <|-- EnemyBullet
 
 BaseSupply <|-- HpSupply
 BaseSupply <|-- BulletSupply
+BaseSupply <|-- BulletPlusSupply
 BaseSupply <|-- BombSupply
 
 ' 依赖关系
 AbstractAircraft ..> BaseBullet : creates
 HeroAircraft ..> HeroBullet : creates
 EliteEnemy ..> EnemyBullet : creates
+ElitePlusEnemy ..> EnemyBullet : creates
+BossEnemy ..> EnemyBullet : creates
+BombSupply ..> CanBeBlownUp : notifies
 
 @enduml

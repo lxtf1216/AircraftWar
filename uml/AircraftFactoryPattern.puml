@@ -7,15 +7,19 @@ skinparam classFontStyle bold
 title 敌机生产工厂模式
 
 interface AircraftFactory {
-    + EnemyAircraft createNewEnemyAircraft()
+    + EnemyAircraft createNewEnemyAircraft(int LocationX, int LocationY, int SpeedX, int SpeedY, int hp)
 }
 
 class MobEnemyFactory {
-    + EnemyAircraft createNewEnemyAircraft()
+    + EnemyAircraft createNewEnemyAircraft(int LocationX, int LocationY, int SpeedX, int SpeedY, int hp)
 }
 
 class EliteEnemyFactory {
-    + EnemyAircraft createNewEnemyAircraft()
+    + EnemyAircraft createNewEnemyAircraft(int LocationX, int LocationY, int SpeedX, int SpeedY, int hp)
+}
+
+class ElitePlusEnemyFactory {
+    + EnemyAircraft createNewEnemyAircraft(int LocationX, int LocationY, int SpeedX, int SpeedY, int hp)
 }
 
 interface EnemyAircraft {
@@ -27,14 +31,20 @@ class MobEnemy {
 class EliteEnemy {
 }
 
+class ElitePlusEnemy {
+}
+
 AircraftFactory <|.. MobEnemyFactory
 AircraftFactory <|.. EliteEnemyFactory
+AircraftFactory <|.. ElitePlusEnemyFactory
 
 EnemyAircraft <|.. MobEnemy
 EnemyAircraft <|.. EliteEnemy
+EnemyAircraft <|.. ElitePlusEnemy
 
 MobEnemyFactory ..> MobEnemy : creates
 EliteEnemyFactory ..> EliteEnemy : creates
+ElitePlusEnemyFactory ..> ElitePlusEnemy : creates
 
 note top of AircraftFactory : 工厂模式核心要素:\n- 抽象工厂接口\n- 具体工厂实现\n- 产品接口\n- 具体产品实现\n- 客户端与具体产品解耦
 

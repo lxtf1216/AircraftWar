@@ -1,0 +1,44 @@
+@startuml
+title Template Method Pattern
+
+abstract class AbstractGame {
+  + action()
+  # {abstract} spawnNewEnemies()
+  # {abstract} spawnBoss()
+  # {abstract} updateDifficulty()
+  # {abstract} setInitialParameters()
+  # timeCountAndNewCycleJudge()
+  # shootAction()
+  # ...
+}
+
+class EasyGame extends AbstractGame {
+  # spawnNewEnemies()
+  # spawnBoss()
+  # updateDifficulty()
+  # setInitialParameters()
+}
+
+class NormalGame extends AbstractGame {
+  # spawnNewEnemies()
+  # spawnBoss()
+  # updateDifficulty()
+  # setInitialParameters()
+}
+
+class HardGame extends AbstractGame {
+  # spawnNewEnemies()
+  # spawnBoss()
+  # updateDifficulty()
+  # setInitialParameters()
+}
+
+note "action() 方法是模板方法，\n定义了游戏循环的骨架。" as N1
+AbstractGame .. N1
+
+note "子类通过重写这些抽象方法\n来定制自己的行为。" as N2
+EasyGame .. N2
+NormalGame .. N2
+HardGame .. N2
+
+@enduml
