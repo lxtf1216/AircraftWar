@@ -231,6 +231,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         if (heroAircraft.getHp() <= 0) {
             gameOverFlag = true;
             isRunning = false;
+            AudioManager.getInstance().stopBgm();
+            AudioManager.getInstance().playGameOver();
         }
     }
 
@@ -335,6 +337,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
                         x, y, 2, 2, hp
                 )
         );
+        AudioManager.getInstance().playBossBgm();
     }
 
     /* ---------------- 敌机生成 ---------------- */
@@ -427,6 +430,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
                 if (enemy.crash(bullet)) {
                     enemy.decreaseHp(bullet.getPower());
                     bullet.vanish();
+                    AudioManager.getInstance().playBulletHit();
                     if (enemy.notValid()) {
                         score += 10;
                         if (enemy instanceof EliteEnemy) {
@@ -447,6 +451,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
                             randomProp(enemy.getLocationX() + 50, enemy.getLocationY() + 50);
                             randomProp(enemy.getLocationX() - 50, enemy.getLocationY() - 50);
                             score += 20;
+                            AudioManager.getInstance().playNormalBgm();
                         }
                     }
                 }
@@ -468,6 +473,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
                             heroAircraft,
                             score
                     );
+                    AudioManager.getInstance().playBomb();
+                } else {
+                    AudioManager.getInstance().playGetSupply();
                 }
                 prop.vanish();
             }

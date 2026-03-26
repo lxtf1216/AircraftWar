@@ -10,6 +10,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ImageManager.init(this);
+        AudioManager.getInstance().init(this);
         gameView = new GameView(this);
         setContentView(gameView);
     }
@@ -17,20 +18,25 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        AudioManager.getInstance().pauseBgm();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        AudioManager.getInstance().resumeBgm();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        AudioManager.getInstance().release();
     }
 
     public class AppSettings {
         public int WINDOW_WIDTH;
         public int WINDOW_HEIGHT;
 
-        /**
-         * 由 GameView 在 surfaceChanged 中调用，更新实际屏幕尺寸
-         */
         public void setScreenSize(int width, int height) {
             WINDOW_WIDTH = width;
             WINDOW_HEIGHT = height;
