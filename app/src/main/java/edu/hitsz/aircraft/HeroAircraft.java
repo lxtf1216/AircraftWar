@@ -129,6 +129,14 @@ public class HeroAircraft extends AbstractAircraft {
 //            powerUpExecutor.shutdown();
 //        }
 //    }
+    public void reset(int locationX, int locationY) {
+        this.locationX = locationX;
+        this.locationY = locationY;
+        this.speedX = 0;
+        this.speedY = 0;
+        this.hp = 100;
+        this.shootstrategy = defaultShootStrategy;
+    }
 
     public void increaseHp(int increase){
         this.hp = Math.min(this.hp + increase, this.maxHp);

@@ -139,6 +139,17 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         });
     }
 
+    public interface OnGameOverListener {
+        void onGameOver(int finalScore);
+    }
+
+    private OnGameOverListener onGameOverListener;
+    private boolean gameOverNotified = false;
+
+    public void setOnGameOverListener(OnGameOverListener listener) {
+        this.onGameOverListener = listener;
+    }
+
     @Override
     public boolean performClick() {
         super.performClick();
@@ -159,7 +170,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         screenWidth = width;
         screenHeight = height;
         AppSettings.setScreenSize(width, height);
-        heroAircraft.setLocation(screenWidth / 2, screenHeight - 150);
+        heroAircraft.reset(screenWidth / 2, screenHeight - 150);
     }
 
     @Override
@@ -228,11 +239,16 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     }
 
     private void checkGameOver() {
-        if (heroAircraft.getHp() <= 0) {
+        if (heroAircraft.getHp() <= 0 && !gameOverFlag) {
             gameOverFlag = true;
             isRunning = false;
             AudioManager.getInstance().stopBgm();
             AudioManager.getInstance().playGameOver();
+
+            if (!gameOverNotified && onGameOverListener != null) {
+                gameOverNotified = true;
+                post(() -> onGameOverListener.onGameOver(score));
+            }
         }
     }
 
@@ -543,5 +559,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
 
     public void setAttributeMultiplier(double multiplier) {
         this.currentAttributeMultiplier = multiplier;
+    }
+
+    public int getScore() {
+        return score;
     }
 }
