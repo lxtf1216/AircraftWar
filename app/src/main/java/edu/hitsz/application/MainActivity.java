@@ -27,8 +27,17 @@ public class MainActivity extends AppCompatActivity {
         ImageManager.init(this);
         AudioManager.getInstance().init(this);
 
-        gameView = new GameView(this);
-        gameView.setOnGameOverListener(this::showSaveScoreDialog);
+        boolean multiplayerMode = getIntent().getBooleanExtra("MULTIPLAYER_MODE", false);
+
+        if (multiplayerMode) {
+            String playerName = getIntent().getStringExtra("PLAYER_NAME");
+            String serverIp = getIntent().getStringExtra("SERVER_IP");
+
+            gameView = new GameView(this, multiplayerMode, playerName, serverIp);
+        } else {
+            gameView = new GameView(this);
+            gameView.setOnGameOverListener(this::showSaveScoreDialog);
+        }
 
         setContentView(gameView);
     }

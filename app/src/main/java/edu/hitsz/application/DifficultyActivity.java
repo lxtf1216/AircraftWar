@@ -21,11 +21,17 @@ public class DifficultyActivity extends AppCompatActivity {
         findViewById(R.id.btn_easy).setOnClickListener(v -> startGame("EASY"));
         findViewById(R.id.btn_normal).setOnClickListener(v -> startGame("NORMAL"));
         findViewById(R.id.btn_hard).setOnClickListener(v -> startGame("HARD"));
+        findViewById(R.id.btn_multiplayer).setOnClickListener(v -> startMultiplayer());
     }
 
     private void startGame(String difficulty) {
         GameConfig.difficulty = difficulty;
         Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+    }
+
+    private void startMultiplayer() {
+        Intent intent = new Intent(this, MultiplayerMenuActivity.class);
         startActivity(intent);
     }
 }

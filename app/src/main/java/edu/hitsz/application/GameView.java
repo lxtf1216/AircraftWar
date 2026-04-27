@@ -2,6 +2,8 @@ package edu.hitsz.application;
 
 import android.content.Context;
 import android.graphics.*;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -11,6 +13,7 @@ import edu.hitsz.basic.AbstractFlyingObject;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.game.*;
 import edu.hitsz.factory.*;
+import edu.hitsz.multiplayer.GameClient;
 import edu.hitsz.observer.BombClearObserver;
 import edu.hitsz.supply.BaseSupply;
 import edu.hitsz.supply.BombSupply;
@@ -20,7 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * 游戏逻辑
+ * Game logic
  */
 public class GameView extends SurfaceView implements SurfaceHolder.Callback, Runnable {
 
@@ -33,8 +36,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     private int screenWidth;
     private int screenHeight;
 
-    /* 游戏对象 */
-
+    /* Game objects */
     private final HeroAircraft heroAircraft;
 
     private final List<AbstractAircraft> enemyAircrafts;
@@ -44,8 +46,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
 
     private final BombClearObserver bombObserver = new BombClearObserver();
 
-    /* 工厂 */
-
+    /* Factories */
     private final AircraftFactory mobFactory = new MobEnemyFactory();
     private final AircraftFactory eliteFactory = new EliteEnemyFactory();
     private final AircraftFactory elitePlusFactory = new ElitePlusEnemyFactory();
@@ -58,8 +59,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
             new BulletPlusSupplyFactory()
     };
 
-    /* 游戏参数 */
-
+    /* Game parameters */
     private int score = 0;
     private int time = 0;
     private int timeInterval = 16;
@@ -83,10 +83,22 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
 
     private final GameTemplate difficultyTemplate;
 
-    /* 构造 */
+    /* Multiplayer */
+    private boolean multiplayerMode = false;
+    private String localPlayerName = "";
+    private String serverIp = "";
 
+    // Opponent info
+    private String opponentName = "Opponent";
+    private int opponentScore = 0;
+    private int opponentHp = 100;
+    private boolean opponentAlive = true;
+    private boolean localPlayerDead = false;
+    private boolean bothPlayersDead = false;
+    private int finalOpponentScore = 0;
+
+    /* Constructor */
     public GameView(Context context) {
-
         super(context);
 
         holder = getHolder();
@@ -117,25 +129,84 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         paint.setTextSize(40);
 
         setOnTouchListener((v, event) -> {
-
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 v.performClick();
             }
-
             if (event.getAction() == MotionEvent.ACTION_MOVE ||
                     event.getAction() == MotionEvent.ACTION_DOWN) {
-
                 float x = event.getX();
                 float y = event.getY();
-
                 if (x < 0 || x > screenWidth || y < 0 || y > screenHeight) {
                     return true;
                 }
-
                 heroAircraft.setLocation((int) x, (int) y);
             }
-
             return true;
+        });
+    }
+
+    public GameView(Context context, boolean multiplayerMode, String playerName, String serverIp) {
+        this(context);
+        this.multiplayerMode = multiplayerMode;
+        this.localPlayerName = playerName;
+        this.serverIp = serverIp;
+
+        if (multiplayerMode) {
+            setupMultiplayerListener();
+        }
+    }
+
+    private void setupMultiplayerListener() {
+        GameClient client = GameClient.getInstance();
+        client.setListener(new GameClient.GameClientListener() {
+            @Override
+            public void onConnected() {}
+
+            @Override
+            public void onDisconnected() {}
+
+            @Override
+            public void onConnectionError(String error) {}
+
+            @Override
+            public void onScoreUpdate(int score) {
+                opponentScore = score;
+            }
+
+            @Override
+            public void onHpUpdate(int hp) {
+                opponentHp = hp;
+                if (hp <= 0) {
+                    opponentAlive = false;
+                }
+            }
+
+            @Override
+            public void onPlayerDead() {
+                opponentAlive = false;
+            }
+
+            @Override
+            public void onGameOver(int finalScore) {
+                finalOpponentScore = finalScore;
+                opponentAlive = false;
+            }
+
+            @Override
+            public void onOpponentInfoReceived(String name, int score, int hp, boolean alive) {
+                opponentName = name;
+                opponentScore = score;
+                opponentHp = hp;
+                opponentAlive = alive;
+            }
+
+            @Override
+            public void onGameStart() {}
+
+            @Override
+            public void onOpponentDisconnected() {
+                opponentAlive = false;
+            }
         });
     }
 
@@ -157,7 +228,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     }
 
     /* Surface */
-
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         isRunning = true;
@@ -183,8 +253,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         }
     }
 
-    /* 游戏主循环 */
-
+    /* Game loop */
     @Override
     public void run() {
         while (isRunning) {
@@ -214,8 +283,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         }
     }
 
-    /* ---------------- 游戏逻辑 ---------------- */
-
+    /* Game logic */
     private void updateGame() throws Exception {
         time += timeInterval;
         if (timeCountAndNewCycleJudge()) {
@@ -239,20 +307,37 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     }
 
     private void checkGameOver() {
-        if (heroAircraft.getHp() <= 0 && !gameOverFlag) {
-            gameOverFlag = true;
-            isRunning = false;
-            AudioManager.getInstance().stopBgm();
-            AudioManager.getInstance().playGameOver();
+        if (gameOverFlag) return;
 
-            if (!gameOverNotified && onGameOverListener != null) {
-                gameOverNotified = true;
-                post(() -> onGameOverListener.onGameOver(score));
+        if (multiplayerMode) {
+            if (heroAircraft.getHp() <= 0 && !localPlayerDead) {
+                localPlayerDead = true;
+                GameClient client = GameClient.getInstance();
+                client.sendPlayerDead();
+                client.sendGameOver(score);
+            }
+            if (localPlayerDead && !opponentAlive) {
+                bothPlayersDead = true;
+                gameOverFlag = true;
+                isRunning = false;
+                AudioManager.getInstance().stopBgm();
+                AudioManager.getInstance().playGameOver();
+            }
+        } else {
+            if (heroAircraft.getHp() <= 0 && !gameOverFlag) {
+                gameOverFlag = true;
+                isRunning = false;
+                AudioManager.getInstance().stopBgm();
+                AudioManager.getInstance().playGameOver();
+                if (!gameOverNotified && onGameOverListener != null) {
+                    gameOverNotified = true;
+                    post(() -> onGameOverListener.onGameOver(score));
+                }
             }
         }
     }
 
-    /* draw */
+    /* Draw */
     private void drawGame() {
         canvas = holder.lockCanvas();
         if (canvas == null) return;
@@ -263,11 +348,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
             paintObjects(canvas, heroBullets);
             paintObjects(canvas, props);
             paintObjects(canvas, enemyAircrafts);
-
             drawHero();
             drawHUD();
         } finally {
-
             holder.unlockCanvasAndPost(canvas);
         }
     }
@@ -275,16 +358,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     private void drawBackground() {
         Bitmap bg = ImageManager.getBackground();
         if (bg == null) return;
-
         int bgHeight = screenHeight;
         backGroundTop += 2;
         if (backGroundTop >= bgHeight) {
             backGroundTop = 0;
         }
-
         Rect rect1 = new Rect(0, backGroundTop - bgHeight, screenWidth, backGroundTop);
         Rect rect2 = new Rect(0, backGroundTop, screenWidth, backGroundTop + bgHeight);
-
         canvas.drawBitmap(bg, null, rect1, null);
         canvas.drawBitmap(bg, null, rect2, null);
     }
@@ -292,47 +372,71 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     private void drawHero() {
         Bitmap heroImg = ImageManager.get(HeroAircraft.class.getName());
         if (heroImg == null) return;
-        canvas.drawBitmap(
-                heroImg,
+        canvas.drawBitmap(heroImg,
                 heroAircraft.getLocationX() - heroImg.getWidth() / 2f,
-                heroAircraft.getLocationY() - heroImg.getHeight() / 2f,
-                null
-        );
+                heroAircraft.getLocationY() - heroImg.getHeight() / 2f, null);
     }
 
     private void drawHUD() {
         paint.setTextSize(50);
-        canvas.drawText("Score: " + score, 20, 80, paint);
-        canvas.drawText("Life: " + heroAircraft.getHp(), 20, 140, paint);
+
+        if (multiplayerMode) {
+            paint.setColor(0xFF00FF00);
+            canvas.drawText(localPlayerName + ": " + score, 20, 80, paint);
+            canvas.drawText("HP: " + heroAircraft.getHp(), 20, 140, paint);
+
+            paint.setColor(0xFFFF6666);
+            String status = opponentAlive ? "HP: " + opponentHp : "Dead";
+            canvas.drawText(opponentName + ": " + opponentScore, screenWidth - 350, 80, paint);
+            canvas.drawText(status, screenWidth - 350, 140, paint);
+
+            paint.setColor(Color.WHITE);
+            paint.setTextSize(30);
+            canvas.drawText("[Multiplayer]", screenWidth / 2 - 60, 40, paint);
+            paint.setTextSize(50);
+        } else {
+            canvas.drawText("Score: " + score, 20, 80, paint);
+            canvas.drawText("Life: " + heroAircraft.getHp(), 20, 140, paint);
+        }
+
         if (gameOverFlag) {
             paint.setTextSize(100);
-            canvas.drawText(
-                    "GAME OVER",
-                    screenWidth / 2 - 200,
-                    screenHeight / 2,
-                    paint
-            );
+            paint.setColor(0xFFFF0000);
+            canvas.drawText("GAME OVER", screenWidth / 2 - 200, screenHeight / 2, paint);
+
+            paint.setColor(Color.WHITE);
+            if (multiplayerMode) {
+                paint.setTextSize(40);
+                String result;
+                // Use finalOpponentScore if available, otherwise use opponentScore
+                int displayOpponentScore = finalOpponentScore > 0 ? finalOpponentScore : opponentScore;
+                if (bothPlayersDead) {
+                    if (score > displayOpponentScore) result = "YOU WIN! " + score + " vs " + displayOpponentScore;
+                    else if (score < displayOpponentScore) result = "YOU LOSE! " + score + " vs " + displayOpponentScore;
+                    else result = "DRAW! " + score + " vs " + displayOpponentScore;
+                } else if (localPlayerDead) {
+                    result = "YOU LOSE! " + score + " vs " + displayOpponentScore;
+                } else {
+                    result = "YOU WIN! " + score + " vs " + displayOpponentScore;
+                }
+                canvas.drawText(result, screenWidth / 2 - 200, screenHeight / 2 + 80, paint);
+            }
         }
     }
 
     private void paintObjects(Canvas canvas, List<? extends AbstractFlyingObject> objects) {
-        for (int i = 0; i < objects.size(); i++) {
-            AbstractFlyingObject obj = objects.get(i);
+        for (AbstractFlyingObject obj : objects) {
             if (obj.notValid()) continue;
             Bitmap img = ImageManager.get(obj.getClass().getName());
             if (img != null) {
-                canvas.drawBitmap(
-                        img,
+                canvas.drawBitmap(img,
                         obj.getLocationX() - img.getWidth() / 2f,
-                        obj.getLocationY() - img.getHeight() / 2f,
-                        null
-                );
+                        obj.getLocationY() - img.getHeight() / 2f, null);
             }
         }
     }
 
     /* Boss */
-
     private boolean shouldSpawnBoss() {
         int expected = score / bossThreshold;
         if (expected > bossTriggerCount && difficultyTemplate.hasBoss()) {
@@ -347,17 +451,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         int y = (int) (Math.random() * screenHeight * 0.05);
         double hpMul = difficultyTemplate.getBossHpMultiplier(bossTriggerCount);
         int hp = (int) (600 * hpMul);
-
-        enemyAircrafts.add(
-                (AbstractAircraft) bossFactory.createNewEnemyAircraft(
-                        x, y, 2, 2, hp
-                )
-        );
+        enemyAircrafts.add((AbstractAircraft) bossFactory.createNewEnemyAircraft(x, y, 2, 2, hp));
         AudioManager.getInstance().playBossBgm();
     }
 
-    /* ---------------- 敌机生成 ---------------- */
-
+    /* Enemy spawn */
     private void spawnEnemy() {
         if (enemyAircrafts.size() >= enemyMaxNumber) return;
         int x = (int) (Math.random() * (screenWidth - 100));
@@ -365,36 +463,23 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         double r = Math.random();
 
         if (r < (1 - currentEliteProb)) {
-            int hp = (int) (30 * currentAttributeMultiplier);
-            int speed = (int) (8 * currentAttributeMultiplier);
-            enemyAircrafts.add(
-                    (AbstractAircraft) mobFactory.createNewEnemyAircraft(
-                            x, y, 0, speed, hp
-                    )
-            );
+            enemyAircrafts.add((AbstractAircraft) mobFactory.createNewEnemyAircraft(
+                    x, y, 0, (int) (8 * currentAttributeMultiplier),
+                    (int) (30 * currentAttributeMultiplier)));
         } else if (r < (1 - currentEliteProb * 0.4)) {
-            int hp = (int) (60 * currentAttributeMultiplier);
-            int speed = (int) (5 * currentAttributeMultiplier);
             int dir = Math.random() > 0.5 ? 2 : -2;
-            enemyAircrafts.add(
-                    (AbstractAircraft) eliteFactory.createNewEnemyAircraft(
-                            x, y, dir, speed, hp
-                    )
-            );
+            enemyAircrafts.add((AbstractAircraft) eliteFactory.createNewEnemyAircraft(
+                    x, y, dir, (int) (5 * currentAttributeMultiplier),
+                    (int) (60 * currentAttributeMultiplier)));
         } else {
-            int hp = (int) (80 * currentAttributeMultiplier);
-            int speed = (int) (4 * currentAttributeMultiplier);
             int dir = Math.random() > 0.5 ? 3 : -3;
-            enemyAircrafts.add(
-                    (AbstractAircraft) elitePlusFactory.createNewEnemyAircraft(
-                            x, y, dir, speed, hp
-                    )
-            );
+            enemyAircrafts.add((AbstractAircraft) elitePlusFactory.createNewEnemyAircraft(
+                    x, y, dir, (int) (4 * currentAttributeMultiplier),
+                    (int) (80 * currentAttributeMultiplier)));
         }
     }
 
-    /* shoot */
-
+    /* Shoot */
     private void shootAction() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         if (shootCounter >= heroShootCycle) {
             heroBullets.addAll(heroAircraft.shoot());
@@ -414,7 +499,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         }
     }
 
-    /* move */
+    /* Move */
     private void bulletsMoveAction() {
         for (BaseBullet bullet : heroBullets) bullet.forward();
         for (BaseBullet bullet : enemyBullets) bullet.forward();
@@ -428,9 +513,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         for (BaseSupply prop : props) prop.forward();
     }
 
-    /* 碰撞 */
-
+    /* Collision */
     private void crashCheckAction() {
+        int hpBefore = heroAircraft.getHp();
+        int scoreBefore = score;
+
         for (BaseBullet bullet : enemyBullets) {
             if (bullet.notValid()) continue;
             if (heroAircraft.crash(bullet)) {
@@ -450,9 +537,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
                     if (enemy.notValid()) {
                         score += 10;
                         if (enemy instanceof EliteEnemy) {
-                            if (Math.random() < 0.5) {
-                                randomProp(enemy.getLocationX(), enemy.getLocationY());
-                            }
+                            if (Math.random() < 0.5) randomProp(enemy.getLocationX(), enemy.getLocationY());
                             score += 10;
                         }
                         if (enemy instanceof ElitePlusEnemy) {
@@ -483,12 +568,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
             if (heroAircraft.crash(prop)) {
                 prop.active();
                 if (prop instanceof BombSupply) {
-                    score = bombObserver.onBombClear(
-                            enemyAircrafts,
-                            enemyBullets,
-                            heroAircraft,
-                            score
-                    );
+                    score = bombObserver.onBombClear(enemyAircrafts, enemyBullets, heroAircraft, score);
                     AudioManager.getInstance().playBomb();
                 } else {
                     AudioManager.getInstance().playGetSupply();
@@ -496,28 +576,31 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
                 prop.vanish();
             }
         }
+
+        // Send multiplayer updates (only if game is still running)
+        if (multiplayerMode && !gameOverFlag) {
+            GameClient client = GameClient.getInstance();
+            int hpAfter = heroAircraft.getHp();
+            if (hpAfter != hpBefore) {
+                client.sendHpUpdate(hpAfter);
+            }
+            if (score != scoreBefore) {
+                client.sendScoreUpdate(score);
+            }
+        }
     }
 
-    /* prop */
     private void randomProp(int x, int y) {
         double r = Math.random();
         SupplyFactory factory;
-        if (r < 0.1) {
-            factory = propFactories[2];
-        } else if (r < 0.6) {
-            factory = propFactories[1];
-        } else if (r < 0.8) {
-            factory = propFactories[0];
-        } else {
-            factory = propFactories[3];
-        }
-        props.add(
-                (BaseSupply) factory.createNewSupply(x, y, 0, 4)
-        );
+        if (r < 0.1) factory = propFactories[2];
+        else if (r < 0.6) factory = propFactories[1];
+        else if (r < 0.8) factory = propFactories[0];
+        else factory = propFactories[3];
+        props.add((BaseSupply) factory.createNewSupply(x, y, 0, 4));
     }
 
-    /* 后处理 */
-
+    /* Post process */
     private void postProcessAction() {
         enemyBullets.removeIf(AbstractFlyingObject::notValid);
         heroBullets.removeIf(AbstractFlyingObject::notValid);
@@ -531,12 +614,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
             cycleTime %= cycleDuration;
             return true;
         }
-
         return false;
     }
 
-    /* 难度接口 */
-
+    /* Difficulty interface */
     public void setHeroShootCycle(int cycleMs) {
         this.heroShootCycle = cycleMs / timeInterval;
     }
@@ -563,5 +644,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
 
     public int getScore() {
         return score;
+    }
+
+    public boolean isMultiplayerMode() {
+        return multiplayerMode;
     }
 }
