@@ -77,7 +77,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     private final int bossThreshold = 500;
     private int bossTriggerCount = 0;
 
-    private boolean gameOverFlag = false;
+    private volatile boolean gameOverFlag = false;
 
     private int backGroundTop = 0;
 
@@ -89,13 +89,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     private String serverIp = "";
 
     // Opponent info
-    private String opponentName = "Opponent";
-    private int opponentScore = 0;
-    private int opponentHp = 100;
-    private boolean opponentAlive = true;
-    private boolean localPlayerDead = false;
-    private boolean bothPlayersDead = false;
-    private int finalOpponentScore = 0;
+    private volatile String opponentName = "Opponent";
+    private volatile int opponentScore = 0;
+    private volatile int opponentHp = 100;
+    private volatile boolean opponentAlive = true;
+    private volatile boolean localPlayerDead = false;
+    private volatile boolean bothPlayersDead = false;
+    private volatile int finalOpponentScore = 0;
 
     /* Constructor */
     public GameView(Context context) {
@@ -129,6 +129,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         paint.setTextSize(40);
 
         setOnTouchListener((v, event) -> {
+            if (localPlayerDead) {
+                return true;
+            }
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 v.performClick();
             }
@@ -285,17 +288,27 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
 
     /* Game logic */
     private void updateGame() throws Exception {
-        time += timeInterval;
-        if (timeCountAndNewCycleJudge()) {
-            if (shouldSpawnBoss()) {
-                spawnBoss();
+
+        // 本地玩家死亡后，不再生成/射击
+        if (!localPlayerDead) {
+            time += timeInterval;
+            if (timeCountAndNewCycleJudge()) {
+                if (shouldSpawnBoss()) {
+                    spawnBoss();
+                }
+                spawnEnemy();
+                shootAction();
             }
-            spawnEnemy();
-            shootAction();
+            difficultyTemplate.updateDifficulty(this, score, time);
         }
+
+        // 世界继续运行
         moveObjects();
-        difficultyTemplate.updateDifficulty(this, score, time);
-        crashCheckAction();
+        // 本地玩家死亡后不再碰撞
+        if (!localPlayerDead) {
+            crashCheckAction();
+        }
+
         postProcessAction();
         checkGameOver();
     }
@@ -312,21 +325,32 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         if (multiplayerMode) {
             if (heroAircraft.getHp() <= 0 && !localPlayerDead) {
                 localPlayerDead = true;
-                GameClient client = GameClient.getInstance();
-                client.sendPlayerDead();
-                client.sendGameOver(score);
+                new Thread(() -> {
+                    try {
+                        GameClient client = GameClient.getInstance();
+                        client.sendPlayerDead();
+                        client.sendGameOver(score);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }).start();
             }
+
             if (localPlayerDead && !opponentAlive) {
                 bothPlayersDead = true;
                 gameOverFlag = true;
-                isRunning = false;
                 AudioManager.getInstance().stopBgm();
                 AudioManager.getInstance().playGameOver();
+
+                // 触发结算弹窗
+                if (!gameOverNotified && onGameOverListener != null) {
+                    gameOverNotified = true;
+                    post(() -> onGameOverListener.onGameOver(score));
+                }
             }
         } else {
             if (heroAircraft.getHp() <= 0 && !gameOverFlag) {
                 gameOverFlag = true;
-                isRunning = false;
                 AudioManager.getInstance().stopBgm();
                 AudioManager.getInstance().playGameOver();
                 if (!gameOverNotified && onGameOverListener != null) {
@@ -383,43 +407,69 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         if (multiplayerMode) {
             paint.setColor(0xFF00FF00);
             canvas.drawText(localPlayerName + ": " + score, 20, 80, paint);
-            canvas.drawText("HP: " + heroAircraft.getHp(), 20, 140, paint);
+            canvas.drawText("HP: " + Math.max(0, heroAircraft.getHp()), 20, 140, paint);
 
             paint.setColor(0xFFFF6666);
             String status = opponentAlive ? "HP: " + opponentHp : "Dead";
-            canvas.drawText(opponentName + ": " + opponentScore, screenWidth - 350, 80, paint);
-            canvas.drawText(status, screenWidth - 350, 140, paint);
+            canvas.drawText(opponentName + ": " + opponentScore, screenWidth - 400, 80, paint);
+            canvas.drawText(status, screenWidth - 400, 140, paint);
 
             paint.setColor(Color.WHITE);
             paint.setTextSize(30);
-            canvas.drawText("[Multiplayer]", screenWidth / 2 - 60, 40, paint);
-            paint.setTextSize(50);
+            canvas.drawText("[MULTIPLAYER MODE]", screenWidth / 2 - 130, 40, paint);
         } else {
+            paint.setColor(Color.WHITE);
             canvas.drawText("Score: " + score, 20, 80, paint);
             canvas.drawText("Life: " + heroAircraft.getHp(), 20, 140, paint);
         }
 
-        if (gameOverFlag) {
+        if (multiplayerMode && localPlayerDead && !gameOverFlag && opponentAlive) {
+            paint.setColor(0x88000000);
+            canvas.drawRect(0, 0, screenWidth, screenHeight, paint);
+
+            paint.setColor(Color.RED);
             paint.setTextSize(100);
-            paint.setColor(0xFFFF0000);
-            canvas.drawText("GAME OVER", screenWidth / 2 - 200, screenHeight / 2, paint);
+            paint.setFakeBoldText(true);
+            canvas.drawText("YOU DIED", screenWidth / 2f - 220, screenHeight / 2f - 50, paint);
 
             paint.setColor(Color.WHITE);
+            paint.setTextSize(50);
+            paint.setFakeBoldText(false);
+            canvas.drawText("Waiting for opponent...", screenWidth / 2f - 270, screenHeight / 2f + 50, paint);
+
+            paint.setTextSize(40);
+            canvas.drawText("Opponent Score: " + opponentScore, screenWidth / 2f - 200, screenHeight / 2f + 150, paint);
+        }
+
+        if (gameOverFlag) {
+            paint.setColor(0xAA000000);
+            canvas.drawRect(0, 0, screenWidth, screenHeight, paint);
+
+            paint.setTextSize(120);
+            paint.setColor(Color.RED);
+            paint.setFakeBoldText(true);
+            canvas.drawText("GAME OVER", screenWidth / 2 - 300, screenHeight / 2 - 100, paint);
+
+            paint.setColor(Color.WHITE);
+            paint.setFakeBoldText(false);
             if (multiplayerMode) {
-                paint.setTextSize(40);
-                String result;
-                // Use finalOpponentScore if available, otherwise use opponentScore
+                paint.setTextSize(50);
                 int displayOpponentScore = finalOpponentScore > 0 ? finalOpponentScore : opponentScore;
-                if (bothPlayersDead) {
-                    if (score > displayOpponentScore) result = "YOU WIN! " + score + " vs " + displayOpponentScore;
-                    else if (score < displayOpponentScore) result = "YOU LOSE! " + score + " vs " + displayOpponentScore;
-                    else result = "DRAW! " + score + " vs " + displayOpponentScore;
-                } else if (localPlayerDead) {
-                    result = "YOU LOSE! " + score + " vs " + displayOpponentScore;
+                String result;
+                if (score > displayOpponentScore) {
+                    paint.setColor(Color.YELLOW);
+                    result = "VICTORY!";
+                } else if (score < displayOpponentScore) {
+                    paint.setColor(Color.LTGRAY);
+                    result = "DEFEAT";
                 } else {
-                    result = "YOU WIN! " + score + " vs " + displayOpponentScore;
+                    result = "DRAW";
                 }
-                canvas.drawText(result, screenWidth / 2 - 200, screenHeight / 2 + 80, paint);
+                canvas.drawText(result, screenWidth / 2 - 100, screenHeight / 2 + 50, paint);
+
+                paint.setColor(Color.WHITE);
+                paint.setTextSize(40);
+                canvas.drawText("Final Score: " + score + " vs " + displayOpponentScore, screenWidth / 2 - 250, screenHeight / 2 + 150, paint);
             }
         }
     }
@@ -481,7 +531,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
 
     /* Shoot */
     private void shootAction() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        if (shootCounter >= heroShootCycle) {
+        if (!localPlayerDead && shootCounter >= heroShootCycle) {
             heroBullets.addAll(heroAircraft.shoot());
             shootCounter = 0;
         } else {
@@ -577,7 +627,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
             }
         }
 
-        // Send multiplayer updates (only if game is still running)
+        // Send multiplayer updates
         if (multiplayerMode && !gameOverFlag) {
             GameClient client = GameClient.getInstance();
             int hpAfter = heroAircraft.getHp();

@@ -1,4 +1,4 @@
-package edu.hitsz.multiplayer;
+package edu.hitsz.server;
 
 import java.io.*;
 import java.net.*;
